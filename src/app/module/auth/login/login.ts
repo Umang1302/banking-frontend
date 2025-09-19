@@ -1,17 +1,19 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { ApiService } from '../services/api.service';
+import { Router, RouterLink } from '@angular/router';
+import { ApiService } from '../../../services/api.service';
 
 
 @Component({
   selector: 'app-login',
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule, RouterLink],
   templateUrl: './login.html',
   styleUrl: './login.css'
 })
 export class Login {
   private apiService = inject(ApiService);
+  private router = inject(Router);
   username = signal('');
   password = signal('');
   rememberMe = signal(false);
@@ -22,6 +24,17 @@ export class Login {
   usernameError = signal('');
   passwordError = signal('');
   isFormTouched = signal(false);
+
+  constructor() {
+    // Check if user is already logged in
+    const token = localStorage.getItem('token');
+    if (token) {
+      // Use setTimeout to ensure router is ready
+      setTimeout(() => {
+        this.router.navigate(['/']);
+      }, 0);
+    }
+  }
 
 
   // Validation methods
@@ -129,19 +142,19 @@ export class Login {
     
     this.isLoading.set(true);
     
-    this.apiService.get('health').subscribe({
+    this.apiService.post('auth/login', {
+      usernameOrEmailOrMobile: this.username(),
+      password: this.password()
+    }).subscribe({
       next: (response: any) => {
         this.isLoading.set(false);
         alert(`Login successful! Backend status: ${response.status}`);
+        localStorage.setItem('token', response.token);
+        this.router.navigate(['/']);
       },
       error: (err) => {
         this.isLoading.set(false);
-        
-        if (err.status === 0) {
-          alert('CORS Error: Please configure your backend to allow requests from http://localhost:4200');
-        } else {
-          alert(`API Error: ${err.status} - ${err.message || 'Unknown error'}`);
-        }
+        alert(`Login failed! ${err.message}`);
       }
     });
   }
