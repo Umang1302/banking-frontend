@@ -1,1 +1,71 @@
 /* You can add global styles to this file, and also import other style files */
+
+/* Global CSS Variables - Banking Color Palette */
+:root {
+  /* Primary Colors */
+  --primary-gradient-start: #667eea;
+  --primary-gradient-end: #764ba2;
+  --primary-color: #667eea;
+  --primary-hover: #5a67d8;
+  
+  /* Text Colors */
+  --text-primary: #2d3748;
+  --text-secondary: #718096;
+  --text-muted: #a0aec0;
+  --text-white: #ffffff;
+  
+  /* Background Colors */
+  --bg-white: #ffffff;
+  --bg-light: #f7fafc;
+  --bg-gray-50: #f9fafb;
+  
+  /* Border Colors */
+  --border-light: #e2e8f0;
+  --border-focus: #667eea;
+  
+  /* Status Colors */
+  --success-color: #68d391;
+  --error-color: #e53e3e;
+  --error-bg: #fed7d7;
+  
+  /* Interactive Colors */
+  --hover-bg: #edf2f7;
+  --focus-ring: rgba(102, 126, 234, 0.1);
+  --shadow-light: rgba(0, 0, 0, 0.1);
+  --shadow-focus: rgba(102, 126, 234, 0.3);
+  
+  /* Component Specific */
+  --checkbox-checked: #667eea;
+  --input-bg: #f7fafc;
+  --input-focus-bg: #ffffff;
+  
+  /* Typography */
+  --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* Spacing */
+  --border-radius: 12px;
+  --border-radius-small: 4px;
+  --border-radius-large: 16px;
+  
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-medium: 0.3s ease;
+}
+
+/* Global Reset and Base Styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family);
+  background-color: var(--bg-white);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
