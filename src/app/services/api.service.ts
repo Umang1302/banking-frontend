@@ -16,7 +16,6 @@ export class ApiService {
     });
   }
 
-  // Generic GET method
   get(endpoint: string, options: any = {}): Observable<any> {
     let httpHeaders = this.getHeaders();
     
@@ -33,7 +32,6 @@ export class ApiService {
     });
   }
 
-  // Generic POST method
   post(endpoint: string, data: any, headers: any = {}): Observable<any> {
     console.log(data,headers);
     let httpHeaders = this.getHeaders();
