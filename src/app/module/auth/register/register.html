@@ -16,9 +16,8 @@
       <!-- form -->
       <form class="register-form" (ngSubmit)="onSubmit()" #registerForm="ngForm">
         <!-- Name Fields Row -->
-        <div class="form-row">
           <div class="form-group">
-            <label for="firstName" class="form-label">First Name</label>
+            <label for="firstName" class="form-label">Username</label>
             <input
               type="text"
               id="firstName"
@@ -30,7 +29,7 @@
               (blur)="onFirstNameBlur()"
               required
               autocomplete="given-name"
-              placeholder="Enter your first name"
+              placeholder="Enter your username"
             />
             <div class="input-icon">
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -42,33 +41,6 @@
               {{ firstNameError() }}
             </div>
           </div>
-  
-          <div class="form-group">
-            <label for="lastName" class="form-label">Last Name</label>
-            <input
-              type="text"
-              id="lastName"
-              name="lastName"
-              class="form-input"
-              [class.error]="lastNameError() && isFormTouched()"
-              [value]="lastName()"
-              (input)="onLastNameChange($event)"
-              (blur)="onLastNameBlur()"
-              required
-              autocomplete="family-name"
-              placeholder="Enter your last name"
-            />
-            <div class="input-icon">
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <div class="error-message" *ngIf="lastNameError() && isFormTouched()">
-              {{ lastNameError() }}
-            </div>
-          </div>
-        </div>
   
         <!-- Email Field -->
         <div class="form-group">
@@ -185,11 +157,7 @@
         <div class="password-requirements" *ngIf="password() && isFormTouched()">
           <p class="requirements-title">Password Requirements:</p>
         <ul class="requirements-list">
-          <li [class.valid]="password().length >= 8">At least 8 characters</li>
-          <li [class.valid]="hasLowercase()">One lowercase letter</li>
-          <li [class.valid]="hasUppercase()">One uppercase letter</li>
-          <li [class.valid]="hasNumber()">One number</li>
-          <li [class.valid]="hasSpecialChar()">One special character (@$!%*?&)</li>
+          <li [class.valid]="password().length >= 6">At least 6 characters</li>
         </ul>
         </div>
   
@@ -214,7 +182,7 @@
           </div>
         </div>
   
-        <button type="submit" class="register-button" [class.loading]="isLoading()" [disabled]="isLoading() || (isFormTouched() && (firstNameError() || lastNameError() || emailError() || mobileError() || passwordError() || confirmPasswordError() || termsError()))">
+        <button type="submit" class="register-button" [class.loading]="isLoading()">
           <span class="button-text">{{ isLoading() ? 'Creating Account...' : 'Create Account' }}</span>
           <svg class="button-arrow" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" *ngIf="!isLoading()">
             <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>

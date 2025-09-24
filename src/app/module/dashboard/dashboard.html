@@ -1,0 +1,46 @@
+<div class="dashboard-container">
+  <!-- Navigation Header -->
+  <header class="dashboard-header">
+    <div class="header-left">
+      <h1 class="dashboard-title">
+        <span class="logo-icon" style="font-style: normal !important;">🏦</span>
+        Nedbank
+      </h1>
+    </div>
+    
+    <nav class="header-nav">
+      <ul class="nav-menu">
+        <li class="nav-item" *ngFor="let navItem of navigationItems">
+          <a [routerLink]="navItem.routerLink" class="nav-link" routerLinkActive="active">
+            <span class="nav-icon" style="font-style: normal !important;">{{ navItem.icon }}</span>
+            {{ navItem.label }}
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="header-right">
+      <!-- User Info -->
+      <div class="user-info" *ngIf="user$ | async as user">
+        <div class="user-avatar">
+          {{ userInitials$ | async }}
+        </div>
+        <div class="user-details">
+          <span class="user-name">{{ userFullName$ | async }}</span>
+          <span class="user-role">{{ getUserRoleDisplay(user) }}</span>
+        </div>
+      </div>
+      
+      <!-- Logout Button -->
+      <button class="logout-btn" (click)="onLogout()">
+        <span class="logout-icon" style="font-style: normal !important;">🚪</span>
+        Logout
+      </button>
+    </div>
+  </header>
+
+  <main class="dashboard-main">
+    <router-outlet></router-outlet>
+    
+  </main>
+</div>

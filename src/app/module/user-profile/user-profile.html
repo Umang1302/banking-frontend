@@ -1,0 +1,373 @@
+<div class="profile-container">
+  <!-- Header -->
+  <div class="profile-header">
+    <button class="back-btn" (click)="goBack()">
+      <span class="back-icon">←</span>
+      Back to Dashboard
+    </button>
+    <h1 class="profile-title">My Profile</h1>
+    <div class="header-actions">
+      <button 
+        class="edit-btn" 
+        (click)="toggleEdit()" 
+        *ngIf="shouldShowEditButton()"
+        [disabled]="isLoading$ | async">
+        <span class="edit-icon">✏️</span>
+        Edit Profile
+      </button>
+      <button 
+        class="cancel-btn" 
+        (click)="toggleEdit()" 
+        *ngIf="shouldShowCancelButton()">
+        Cancel
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading$ | async" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading profile...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error$ | async as error" class="error-container">
+    <div class="error-message">
+      <span class="error-icon">⚠️</span>
+      <h3>Error Loading Profile</h3>
+      <p>{{ error }}</p>
+      <button (click)="userService.loadProfile()" class="retry-btn">Try Again</button>
+    </div>
+  </div>
+
+  <!-- Status-based Messages -->
+  <div class="status-container" *ngIf="!(isLoading$ | async) && !(error$ | async)">
+    
+    <!-- Pending Details Status -->
+    <div *ngIf="isPendingDetails() && !submitSuccess" class="status-message pending-details">
+      <span class="status-icon">📋</span>
+      <h3>Complete Your Profile</h3>
+      <p>{{ getStatusMessage() }}</p>
+      <div class="status-badge pending">Profile Completion Required</div>
+    </div>
+
+    <!-- Pending Approval Status -->
+    <div *ngIf="isPendingApproval() || (isPendingDetails() && submitSuccess)" class="status-message pending-approval">
+      <span class="status-icon">⏳</span>
+      <h3>Profile Under Review</h3>
+      <p>{{ getStatusMessage() }}</p>
+      <div class="status-badge pending">Pending Admin Approval</div>
+    </div>
+
+    <!-- Active Status -->
+    <div *ngIf="isActive() && !isEditing" class="status-message active">
+      <span class="status-icon">✅</span>
+      <h3>Profile Active</h3>
+      <p>{{ getStatusMessage() }}</p>
+      <div class="status-badge active">Approved & Active</div>
+    </div>
+
+    <!-- Rejected Status -->
+    <div *ngIf="isRejected() && !submitSuccess" class="status-message rejected">
+      <span class="status-icon">❌</span>
+      <h3>Profile Rejected</h3>
+      <p>{{ getStatusMessage() }}</p>
+      <div class="status-badge rejected">Requires Updates</div>
+      <div class="rejection-reason" *ngIf="(user$ | async)?.rejectionReason">
+        <strong>Rejection Reason:</strong> {{ (user$ | async)?.rejectionReason }}
+      </div>
+    </div>
+
+    <!-- Success Message for Updates -->
+    <div *ngIf="submitSuccess && isActive()" class="status-message success">
+      <span class="status-icon">✅</span>
+      <h3>Update Request Submitted</h3>
+      <p>Your profile update request has been submitted for admin approval. You will be notified once it's reviewed.</p>
+    </div>
+
+  </div>
+
+  <!-- Profile Form -->
+  <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" *ngIf="!(isLoading$ | async) && !(error$ | async)" class="profile-form">
+    
+    <!-- Basic Information Section -->
+    <div class="form-section">
+      <h2 class="section-title">Basic Information</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="firstName" class="form-label">
+            First Name <span class="required">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="firstName"
+            formControlName="firstName"
+            class="form-input"
+            [class.error]="hasFieldError('firstName')"
+            [readonly]="!canEdit()"
+            placeholder="Enter your first name">
+          <div *ngIf="hasFieldError('firstName')" class="error-text">
+            {{ getFieldError('firstName') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="lastName" class="form-label">
+            Last Name <span class="required">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="lastName"
+            formControlName="lastName"
+            class="form-input"
+            [class.error]="hasFieldError('lastName')"
+            [readonly]="!canEdit()"
+            placeholder="Enter your last name">
+          <div *ngIf="hasFieldError('lastName')" class="error-text">
+            {{ getFieldError('lastName') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="email" class="form-label">
+            Email Address <span class="required">*</span>
+          </label>
+          <input 
+            type="email" 
+            id="email"
+            formControlName="email"
+            class="form-input"
+            [class.error]="hasFieldError('email')"
+            [readonly]="!canEdit()"
+            placeholder="Enter your email address">
+          <div *ngIf="hasFieldError('email')" class="error-text">
+            {{ getFieldError('email') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="mobile" class="form-label">
+            Mobile Number <span class="required">*</span>
+          </label>
+          <input 
+            type="tel" 
+            id="mobile"
+            formControlName="mobile"
+            class="form-input"
+            [class.error]="hasFieldError('mobile')"
+            [readonly]="!canEdit()"
+            placeholder="Enter your mobile number">
+          <div *ngIf="hasFieldError('mobile')" class="error-text">
+            {{ getFieldError('mobile') }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Address Information Section -->
+    <div class="form-section">
+      <h2 class="section-title">Address Information</h2>
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label for="address" class="form-label">
+            Street Address 
+            <span class="required" *ngIf="isPendingDetails() || isRejected()">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="address"
+            formControlName="address"
+            class="form-input"
+            [class.error]="hasFieldError('address')"
+            [readonly]="!canEdit()"
+            placeholder="Enter your street address">
+          <div *ngIf="hasFieldError('address')" class="error-text">
+            {{ getFieldError('address') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="city" class="form-label">
+            City
+            <span class="required" *ngIf="isPendingDetails() || isRejected()">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="city"
+            formControlName="city"
+            class="form-input"
+            [class.error]="hasFieldError('city')"
+            [readonly]="!canEdit()"
+            placeholder="Enter your city">
+          <div *ngIf="hasFieldError('city')" class="error-text">
+            {{ getFieldError('city') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="state" class="form-label">
+            State/Province
+            <span class="required" *ngIf="isPendingDetails() || isRejected()">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="state"
+            formControlName="state"
+            class="form-input"
+            [class.error]="hasFieldError('state')"
+            [readonly]="!canEdit()"
+            placeholder="Enter your state">
+          <div *ngIf="hasFieldError('state')" class="error-text">
+            {{ getFieldError('state') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="zipCode" class="form-label">ZIP/Postal Code</label>
+          <input 
+            type="text" 
+            id="zipCode"
+            formControlName="zipCode"
+            class="form-input"
+            [class.error]="hasFieldError('zipCode')"
+            [readonly]="!canEdit()"
+            placeholder="Enter ZIP code">
+          <div *ngIf="hasFieldError('zipCode')" class="error-text">
+            {{ getFieldError('zipCode') }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Personal Information Section -->
+    <div class="form-section">
+      <h2 class="section-title">Personal Information</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="dateOfBirth" class="form-label">
+            Date of Birth
+            <span class="required" *ngIf="isPendingDetails() || isRejected()">*</span>
+          </label>
+          <input 
+            type="date" 
+            id="dateOfBirth"
+            formControlName="dateOfBirth"
+            class="form-input"
+            [class.error]="hasFieldError('dateOfBirth')"
+            [readonly]="!canEdit()">
+          <div *ngIf="hasFieldError('dateOfBirth')" class="error-text">
+            {{ getFieldError('dateOfBirth') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="occupation" class="form-label">
+            Occupation
+            <span class="required" *ngIf="isPendingDetails() || isRejected()">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="occupation"
+            formControlName="occupation"
+            class="form-input"
+            [class.error]="hasFieldError('occupation')"
+            [readonly]="!canEdit()"
+            placeholder="Enter your occupation">
+          <div *ngIf="hasFieldError('occupation')" class="error-text">
+            {{ getFieldError('occupation') }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="annualIncome" class="form-label">Annual Income (R)</label>
+          <input 
+            type="number" 
+            id="annualIncome"
+            formControlName="annualIncome"
+            class="form-input"
+            [class.error]="hasFieldError('annualIncome')"
+            [readonly]="!canEdit()"
+            placeholder="Enter annual income"
+            min="0">
+          <div *ngIf="hasFieldError('annualIncome')" class="error-text">
+            {{ getFieldError('annualIncome') }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Emergency Contact Section -->
+    <div class="form-section">
+      <h2 class="section-title">Emergency Contact</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="emergencyContactName" class="form-label">Contact Name</label>
+          <input 
+            type="text" 
+            id="emergencyContactName"
+            formControlName="emergencyContactName"
+            class="form-input"
+            [readonly]="!canEdit()"
+            placeholder="Enter emergency contact name">
+        </div>
+
+        <div class="form-group">
+          <label for="emergencyContactPhone" class="form-label">Contact Phone</label>
+          <input 
+            type="tel" 
+            id="emergencyContactPhone"
+            formControlName="emergencyContactPhone"
+            class="form-input"
+            [class.error]="hasFieldError('emergencyContactPhone')"
+            [readonly]="!canEdit()"
+            placeholder="Enter emergency contact phone">
+          <div *ngIf="hasFieldError('emergencyContactPhone')" class="error-text">
+            {{ getFieldError('emergencyContactPhone') }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reason for Update Section (only shown when editing existing profile) -->
+    <div class="form-section" *ngIf="isActive() && isEditing">
+      <h2 class="section-title">Reason for Update</h2>
+      <div class="form-group full-width">
+        <label for="reason" class="form-label">
+          Please explain why you need to update your profile <span class="required">*</span>
+        </label>
+        <textarea 
+          id="reason"
+          formControlName="reason"
+          class="form-textarea"
+          [class.error]="hasFieldError('reason')"
+          placeholder="Please provide a detailed reason for updating your profile information. This helps our admin team process your request efficiently."
+          rows="4"></textarea>
+        <div *ngIf="hasFieldError('reason')" class="error-text">
+          {{ getFieldError('reason') }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions" *ngIf="canEdit() && (isPendingDetails() || isRejected() || (isActive() && isEditing))">
+      <button 
+        type="submit" 
+        class="submit-btn"
+        [disabled]="!profileForm.valid || isSubmitting">
+        <span *ngIf="!isSubmitting">{{ getSubmitButtonText() }}</span>
+        <span *ngIf="isSubmitting">
+          <div class="inline-spinner"></div>
+          Submitting...
+        </span>
+      </button>
+      <button 
+        type="button" 
+        class="cancel-btn"
+        (click)="toggleEdit()"
+        *ngIf="isActive() && isEditing"
+        [disabled]="isSubmitting">
+        Cancel
+      </button>
+    </div>
+  </form>
+</div>

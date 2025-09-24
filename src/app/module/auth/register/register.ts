@@ -1,8 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../../services/api.service';
+import { UserService } from '../../../store/userStore/user.service';
 
 @Component({
   selector: 'app-register',
@@ -12,6 +13,8 @@ import { ApiService } from '../../../services/api.service';
 })
 export class Register {
   private apiService = inject(ApiService);
+  private router = inject(Router);
+  private userService = inject(UserService);
   
   // Form fields
   firstName = signal('');
@@ -33,12 +36,11 @@ export class Register {
   termsError = signal('');
   isFormTouched = signal(false);
 
+
   // Validation methods
   private validateName(name: string, fieldName: string): string {
     if (!name) return `${fieldName} is required`;
     if (name.length < 2) return `${fieldName} must be at least 2 characters`;
-    if (name.length > 50) return `${fieldName} must be less than 50 characters`;
-    if (!/^[a-zA-Z\s'-]+$/.test(name)) return `${fieldName} contains invalid characters`;
     return '';
   }
 
@@ -65,11 +67,11 @@ export class Register {
 
   private validatePassword(password: string): string {
     if (!password) return 'Password is required';
-    if (password.length < 8) return 'Password must be at least 8 characters';
-    if (!/(?=.*[a-z])/.test(password)) return 'Password must contain at least one lowercase letter';
-    if (!/(?=.*[A-Z])/.test(password)) return 'Password must contain at least one uppercase letter';
-    if (!/(?=.*\d)/.test(password)) return 'Password must contain at least one number';
-    if (!/(?=.*[@$!%*?&])/.test(password)) return 'Password must contain at least one special character (@$!%*?&)';
+    if (password.length < 8) return 'Password must be at least 6 characters';
+    // if (!/(?=.*[a-z])/.test(password)) return 'Password must contain at least one lowercase letter';
+    // if (!/(?=.*[A-Z])/.test(password)) return 'Password must contain at least one uppercase letter';
+    // if (!/(?=.*\d)/.test(password)) return 'Password must contain at least one number';
+    // if (!/(?=.*[@$!%*?&])/.test(password)) return 'Password must contain at least one special character (@$!%*?&)';
     return '';
   }
 
@@ -167,14 +169,14 @@ export class Register {
 
   private validateForm(): boolean {
     this.validateFirstName();
-    this.validateLastName();
+    // Note: lastName field doesn't exist in the form, so skip validation
     this.validateEmailField();
     this.validateMobileField();
     this.validatePasswordField();
     this.validateConfirmPasswordField();
     this.validateTermsField();
     
-    return !this.firstNameError() && !this.lastNameError() && !this.emailError() && 
+    return !this.firstNameError() && !this.emailError() && 
            !this.mobileError() && !this.passwordError() && !this.confirmPasswordError() && 
            !this.termsError();
   }
@@ -182,6 +184,7 @@ export class Register {
   // Event handlers
   onFirstNameChange(event: Event) {
     const target = event.target as HTMLInputElement;
+    console.log('🔤 First name changed to:', target.value);
     this.firstName.set(target.value);
     
     if (this.isFormTouched()) {
@@ -244,41 +247,60 @@ export class Register {
   }
 
   onSubmit() {
-    if (this.isLoading()) return;
+    console.log('Register button clicked!');
+    
+    if (this.isLoading()) {
+      console.log('Already loading, skipping...');
+      return;
+    }
     
     // Mark form as touched to show validation errors
     this.isFormTouched.set(true);
     
     // Validate form before submission
-    if (!this.validateForm()) {
+    const isValid = this.validateForm();
+    console.log('✅ Form validation result:', isValid);
+    console.log('❌ Form errors:', {
+      firstName: this.firstNameError(),
+      email: this.emailError(),
+      mobile: this.mobileError(),
+      password: this.passwordError(),
+      confirmPassword: this.confirmPasswordError(),
+      terms: this.termsError()
+    });
+    
+    if (!isValid) {
+      console.log('❌ Form validation failed, not submitting');
       return;
     }
     
+    // Set loading state
     this.isLoading.set(true);
+    console.log('⏳ Set loading to true');
     
-    // Call registration API
-    this.apiService.post('register', {
-      firstName: this.firstName(),
-      lastName: this.lastName(),
+    const registrationData = {
+      username: this.firstName(),
       email: this.email(),
       mobile: this.mobile(),
       password: this.password()
-    }, {}).subscribe({
-      next: (response: any) => {
-        this.isLoading.set(false);
-        alert(`Registration successful! Please check your email to verify your account.`);
-      },
-      error: (err) => {
-        this.isLoading.set(false);
-        
-        if (err.status === 0) {
-          alert('CORS Error: Please configure your backend to allow requests from http://localhost:4200');
-        } else if (err.status === 409) {
-          alert('Email or mobile number already exists. Please use different credentials.');
-        } else {
-          alert(`Registration Error: ${err.status} - ${err.message || 'Unknown error'}`);
-        }
-      }
+    };
+    
+    console.log('📝 Form field values:', {
+      firstName: this.firstName(),
+      email: this.email(),
+      mobile: this.mobile(),
+      password: this.password(),
+      confirmPassword: this.confirmPassword(),
+      acceptTerms: this.acceptTerms()
     });
+    console.log('📝 Starting registration with data:', registrationData);
+    
+    try {
+      this.userService.register(registrationData);
+      console.log('✅ UserService.register() called successfully');
+    } catch (error) {
+      console.error('❌ Error calling UserService.register():', error);
+      this.isLoading.set(false);
+    }
   }
 }
