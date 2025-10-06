@@ -15,8 +15,46 @@ export enum UserRole {
   ADMIN = 'ADMIN'
 }
 
+// Account interface
+export interface Account {
+  accountId: number;
+  accountNumber: string;
+  accountType: string;
+  balance: string;
+  availableBalance: string;
+  currency: string;
+  status: string;
+  interestRate?: string;
+  minimumBalance: string;
+  createdAt: string;
+  lastTransactionDate?: string;
+}
+
+// Customer interface
+export interface Customer {
+  customerId: number;
+  customerNumber: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  mobile: string;
+  address: string;
+  nationalId: string;
+  status: string;
+  createdAt: string;
+  otherInfo?: string;
+}
+
+// Role interface
+export interface Role {
+  id: number;
+  name: string;
+  description: string;
+}
+
 // User interface for type safety
 export interface User {
+  userId?: number;
   id?: string;
   username: string;
   email: string;
@@ -25,6 +63,12 @@ export interface User {
   lastName?: string;
   role?: UserRole | string;
   status?: UserStatus | string;
+  createdAt?: string;
+  updatedAt?: string;
+  roles?: Role[];
+  permissions?: string[];
+  customer?: Customer;
+  accounts?: Account[];
   // Additional profile fields
   address?: string;
   city?: string;
@@ -72,7 +116,7 @@ export const userActions = createActionGroup({
 
         // Profile completion actions
         'Submit Profile For Approval': props<{ profileData: any }>(),
-        'Submit Profile Success': props<{ user: User }>(),
+        'Submit Profile Success': props<{ status: string }>(),
         'Submit Profile Failure': props<{ error: string }>(),
 
         // Admin approval actions

@@ -236,6 +236,24 @@
             {{ getFieldError('zipCode') }}
           </div>
         </div>
+
+        <div class="form-group">
+          <label for="nationalId" class="form-label">
+            National ID
+            <span class="required" *ngIf="isPendingDetails() || isRejected()">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="nationalId"
+            formControlName="nationalId"
+            class="form-input"
+            [class.error]="hasFieldError('nationalId')"
+            [readonly]="!canEdit()"
+            placeholder="Enter your national ID">
+          <div *ngIf="hasFieldError('nationalId')" class="error-text">
+            {{ getFieldError('nationalId') }}
+          </div>
+        </div>
       </div>
     </div>
 

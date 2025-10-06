@@ -22,13 +22,14 @@ export class UserEffects {
           map((response: any) => {
             // Store token in localStorage
             localStorage.setItem('token', response.token);
+            console.log("response", response);
             const authResponse: AuthResponse = {
               user: response.user || {
                 id: response.userId || '',
                 email: credentials.usernameOrEmailOrMobile,
                 username: response.username || credentials.usernameOrEmailOrMobile,
                 mobile: response.mobile || credentials.usernameOrEmailOrMobile,
-                role: response.roles?.[0]?.name?.toLowerCase() || UserRole.USER.toLowerCase(),
+                role: response.role.toLowerCase(),
                 status: response.status || UserStatus.PENDING_DETAILS,
               },
               token: response.token,
@@ -112,14 +113,22 @@ export class UserEffects {
         const user = authResponse.user;
         const isProfileComplete = this.isProfileComplete(user);
         
-        if (!isProfileComplete) {
+        // Check if user is admin
+        const userRole = user.roles?.[0]?.name || user.role;
+        console.log("userRole", userRole);
+        const isAdmin = userRole === 'admin' || userRole === 'superadmin';
+        
+        if (isAdmin) {
+          // Redirect admin users to admin dashboard
+          this.router.navigate(['/dashboard/admin']);
+        } else if (!isProfileComplete) {
           // Redirect to profile page if incomplete
-          this.router.navigate(['/profile'], { 
+          this.router.navigate(['/dashboard/profile'], { 
             queryParams: { firstLogin: 'true' } 
           });
         } else {
-          // Redirect to dashboard if profile is complete
-          this.router.navigate(['/dashboard']);
+          // Redirect to dashboard home if profile is complete
+          this.router.navigate(['/dashboard/home']);
         }
       })
     ),
@@ -148,14 +157,21 @@ export class UserEffects {
         const user = authResponse.user;
         const isProfileComplete = this.isProfileComplete(user);
         
-        if (!isProfileComplete) {
+        // Check if user is admin
+        const userRole = user.roles?.[0]?.name || user.role;
+        const isAdmin = userRole === 'admin' || userRole === 'superadmin';
+        
+        if (isAdmin) {
+          // Redirect admin users to admin dashboard
+          this.router.navigate(['/dashboard/admin']);
+        } else if (!isProfileComplete) {
           // Redirect to profile page for profile completion
-          this.router.navigate(['/profile'], { 
+          this.router.navigate(['/dashboard/profile'], { 
             queryParams: { firstLogin: 'true' } 
           });
         } else {
-          // Redirect to dashboard if profile is somehow already complete
-          this.router.navigate(['/dashboard']);
+          // Redirect to dashboard home if profile is somehow already complete
+          this.router.navigate(['/dashboard/home']);
         }
       })
     ),
@@ -186,32 +202,39 @@ export class UserEffects {
             console.log('Load profile API response:', response);
             
             // Create a normalized user object from the API response
+            // Handle both direct customer response and nested user.customer response
+            const customer = response.customer || response;
+            
             const user = {
-              id: response.userId?.toString() || response.id?.toString(),
-              username: response.username,
-              email: response.email,
-              mobile: response.mobile,
-              status: response.status, // Keep original API status
-              role: response.roles?.[0]?.name?.toLowerCase() || 'user',
-              // Include customer data if available
-              customer: response.customer,
-              roles: response.roles,
-              permissions: response.permissions,
-              accounts: response.accounts,
-              // Extract fields from customer object
-              firstName: response.customer?.firstName,
-              lastName: response.customer?.lastName,
-              address: response.customer?.address,
+              id: response.userId?.toString() || response.id?.toString() || customer.customerId?.toString(),
+              username: response.username || customer.firstName + customer.lastName,
+              email: response.email || customer.email,
+              mobile: response.mobile || customer.mobile,
+              status: response.status || customer.status, // Keep original API status
+              role: response.roles?.[0]?.name?.toLowerCase() || 'customer',
+              // Include full customer data
+              customer: customer,
+              roles: response.roles || [],
+              permissions: response.permissions || [],
+              accounts: response.accounts || [],
+              // Extract fields from customer object for backward compatibility
+              firstName: customer?.firstName,
+              lastName: customer?.lastName,
+              address: customer?.address,
+              nationalId: customer?.nationalId,
+              dateOfBirth: customer?.dateOfBirth,
               // Parse otherInfo if available
-              ...(response.customer?.otherInfo ? (() => {
+              ...(customer?.otherInfo ? (() => {
                 try {
-                  return JSON.parse(response.customer.otherInfo);
+                  return JSON.parse(customer.otherInfo);
                 } catch (e) {
+                  console.warn('Failed to parse otherInfo:', e);
                   return {};
                 }
               })() : {})
             };
             
+            console.log('Normalized user object:', user);
             return userActions.loadProfileSuccess({ user });
           }),
           catchError((error) => {
@@ -222,6 +245,81 @@ export class UserEffects {
         );
       })
     )
+  );
+
+
+  // Submit profile for approval effect
+  submitProfileForApproval$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(userActions.submitProfileForApproval),
+      exhaustMap(({ profileData }) => {
+        // Transform form data to match API structure
+        console.log("profileData", profileData);
+        const apiPayload = {
+          firstName: profileData.firstName,
+          lastName: profileData.lastName,
+          address: profileData.address,
+          nationalId: profileData.nationalId || '', // You might need to add this field to your form
+          mobile: profileData.mobile,
+          email: profileData.email,
+          dateOfBirth: profileData.dateOfBirth ? new Date(profileData.dateOfBirth).toISOString() : null,
+          otherInfo: {
+            occupation: profileData.occupation,
+            salary: profileData.annualIncome,
+            city: profileData.city,
+            state: profileData.state,
+            zipCode: profileData.zipCode,
+            emergencyContactName: profileData.emergencyContactName,
+            emergencyContactPhone: profileData.emergencyContactPhone,
+            reason: profileData.reason // Include reason for updates
+          }
+        };
+
+        console.log('Submitting profile data:', apiPayload);
+
+        return this.apiService.post('users/customer-details', apiPayload, { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}` 
+        }).pipe(
+          map((response: any) => {
+            console.log('Profile submission API response:', response);
+            
+            return userActions.submitProfileSuccess({ status: response.userStatus });
+          }),
+          catchError((error) => {
+            console.error('Profile submission error:', error);
+            return of(userActions.submitProfileFailure({ 
+              error: error.error?.message || error.message || 'Failed to submit profile for approval' 
+            }));
+          })
+        );
+      })
+    );
+  })
+
+  // Submit profile success effect - automatically reload profile
+  submitProfileSuccess$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(userActions.submitProfileSuccess),
+      tap(({ status }) => {
+        console.log('Profile submitted successfully:', status);
+      }),
+      map(() => {
+        // Automatically trigger profile reload after successful submission
+        return userActions.loadProfile();
+      })
+    )
+  );  
+
+  // Submit profile failure effect
+  submitProfileFailure$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(userActions.submitProfileFailure),
+      tap(({ error }) => {
+        console.error('Profile submission failed:', error);
+      })
+    ),
+    { dispatch: false }
   );
 
 }

@@ -2,7 +2,6 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Observable } from 'rxjs';
 
 import { UserService } from '../../store/userStore/user.service';
 import { User, UserStatus, UserRole } from '../../store/userStore/user.action';
@@ -16,6 +15,7 @@ export interface ProfileUpdateRequest {
   city?: string;
   state?: string;
   zipCode?: string;
+  nationalId?: string;
   dateOfBirth?: string;
   occupation?: string;
   annualIncome?: number;
@@ -56,28 +56,31 @@ export class UserProfileComponent implements OnInit {
   constructor() {
     this.profileForm = this.fb.group({
       // Basic Information
-      firstName: ['', [Validators.required, Validators.minLength(2)]],
-      lastName: ['', [Validators.required, Validators.minLength(2)]],
-      email: ['', [Validators.required, Validators.email]],
-      mobile: ['', [Validators.required, Validators.pattern(/^\+?[\d\s\-\(\)]+$/)]],
+      firstName: [''],
+      lastName: [''],
+      email: [''],
+      mobile: [''],
       
       // Address Information
       address: [''],
       city: [''],
       state: [''],
-      zipCode: ['', [Validators.pattern(/^\d{5}(-\d{4})?$/)]],
+      zipCode: [''],
+      
+      // National ID (required by API)
+      nationalId: [''],
       
       // Personal Information
       dateOfBirth: [''],
       occupation: [''],
-      annualIncome: [null, [Validators.min(0)]],
+      annualIncome: [null],
       
       // Emergency Contact
       emergencyContactName: [''],
-      emergencyContactPhone: ['', [Validators.pattern(/^\+?[\d\s\-\(\)]+$/)]],
+      emergencyContactPhone: [''],
       
-      // Reason for update (required when submitting for approval)
-      reason: ['', [Validators.required, Validators.minLength(10)]]
+      // Reason for update (only required when editing active profile)
+      reason: ['']
     });
   }
 
@@ -92,6 +95,7 @@ export class UserProfileComponent implements OnInit {
     // Subscribe to user data and populate form
     this.user$.subscribe(user => {
       if (user) {
+        console.log("MADE CHANGES");
         // Map API status to our enum values
         this.currentUserStatus = this.mapApiStatusToEnum(user.status) || UserStatus.PENDING_DETAILS;
         this.currentUserRole = this.mapApiRoleToEnum(user) || UserRole.USER;
@@ -178,6 +182,12 @@ export class UserProfileComponent implements OnInit {
   }
 
   updateFormValidators(isProfileCompletion: boolean): void {
+    // Always set basic field validators
+    this.profileForm.get('firstName')?.setValidators([Validators.required]);
+    this.profileForm.get('lastName')?.setValidators([Validators.required]);
+    this.profileForm.get('email')?.setValidators([Validators.required, Validators.email]);
+    this.profileForm.get('mobile')?.setValidators([Validators.required]);
+    
     if (isProfileCompletion) {
       // For profile completion, make more fields required
       this.profileForm.get('address')?.setValidators([Validators.required]);
@@ -185,13 +195,16 @@ export class UserProfileComponent implements OnInit {
       this.profileForm.get('state')?.setValidators([Validators.required]);
       this.profileForm.get('dateOfBirth')?.setValidators([Validators.required]);
       this.profileForm.get('occupation')?.setValidators([Validators.required]);
+      this.profileForm.get('nationalId')?.setValidators([Validators.required]);
+      this.profileForm.get('reason')?.setValidators([]); // Not required for profile completion
     } else {
-      // For profile updates, keep original validators
+      // For profile updates, make fewer fields required
       this.profileForm.get('address')?.setValidators([]);
       this.profileForm.get('city')?.setValidators([]);
       this.profileForm.get('state')?.setValidators([]);
       this.profileForm.get('dateOfBirth')?.setValidators([]);
       this.profileForm.get('occupation')?.setValidators([]);
+      this.profileForm.get('reason')?.setValidators([Validators.minLength(10)]); // Required for updates
     }
     
     // Update form control validators
@@ -201,56 +214,53 @@ export class UserProfileComponent implements OnInit {
   }
 
   populateForm(user: User): void {
+    console.log('Populating form with user data:', user);
+    
     // Parse additional info from customer.otherInfo if available
     let additionalInfo: any = {};
     if ((user as any).customer?.otherInfo) {
       try {
         additionalInfo = JSON.parse((user as any).customer.otherInfo);
+        console.log('Parsed otherInfo:', additionalInfo);
       } catch (error) {
         console.warn('Failed to parse customer otherInfo:', error);
       }
     }
 
-    // Only populate form if NOT in PENDING_DETAILS state
-    if (this.currentUserStatus !== UserStatus.PENDING_DETAILS) {
-      this.profileForm.patchValue({
-        firstName: (user as any).customer?.firstName || user.firstName || '',
-        lastName: (user as any).customer?.lastName || user.lastName || '',
-        email: (user as any).customer?.email || user.email || '',
-        mobile: (user as any).customer?.mobile || user.mobile || '',
-        address: additionalInfo.streetAddress || user.address || '',
-        city: additionalInfo.city || user.city || '',
-        state: additionalInfo.state || user.state || '',
-        zipCode: additionalInfo.zipCode || user.zipCode || '',
-        dateOfBirth: user.dateOfBirth || '',
-        occupation: additionalInfo.occupation || user.occupation || '',
-        annualIncome: additionalInfo.annualIncome || user.annualIncome || null,
-        emergencyContactName: additionalInfo.emergencyContactName || user.emergencyContactName || '',
-        emergencyContactPhone: additionalInfo.emergencyContactPhone || user.emergencyContactPhone || ''
-      });
-    } else {
-      // For PENDING_DETAILS, only populate basic fields that user might have from registration
-      this.profileForm.patchValue({
-        firstName: (user as any).customer?.firstName || user.firstName || '',
-        lastName: (user as any).customer?.lastName || user.lastName || '',
-        email: (user as any).customer?.email || user.email || '',
-        mobile: (user as any).customer?.mobile || user.mobile || '',
-        // Leave other fields empty for user to fill
-        address: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        dateOfBirth: '',
-        occupation: '',
-        annualIncome: null,
-        emergencyContactName: '',
-        emergencyContactPhone: ''
-      });
-    }
+    // Always populate all available data, regardless of status
+    const customer = (user as any).customer;
+    
+    this.profileForm.patchValue({
+      // Basic Information - prioritize customer data over user data
+      firstName: customer?.firstName || user.firstName || '',
+      lastName: customer?.lastName || user.lastName || '',
+      email: customer?.email || user.email || '',
+      mobile: customer?.mobile || user.mobile || '',
+      
+      // Address Information - from customer object and otherInfo
+      address: customer?.address || additionalInfo.streetAddress || user.address || '',
+      city: additionalInfo.city || user.city || '',
+      state: additionalInfo.state || user.state || '',
+      zipCode: additionalInfo.zipCode || user.zipCode || '',
+      nationalId: customer?.nationalId || '',
+      
+      // Personal Information - from otherInfo and user object
+      dateOfBirth: this.formatDateForInput(customer?.dateOfBirth || user.dateOfBirth || ''),
+      occupation: additionalInfo.occupation || user.occupation || '',
+      annualIncome: additionalInfo.salary || additionalInfo.annualIncome || user.annualIncome || null,
+      
+      // Emergency Contact - from otherInfo
+      emergencyContactName: additionalInfo.emergencyContactName || user.emergencyContactName || '',
+      emergencyContactPhone: additionalInfo.emergencyContactPhone || user.emergencyContactPhone || '',
+      
+      // Reason - from otherInfo (for updates)
+      reason: additionalInfo.reason || ''
+    });
+
+    console.log('Form populated with values:', this.profileForm.value);
   }
 
   toggleEdit(): void {
-    // Only allow toggle if user status is ACTIVE
     if (this.currentUserStatus === UserStatus.ACTIVE) {
       this.isEditing = !this.isEditing;
       this.submitSuccess = false;
@@ -270,36 +280,48 @@ export class UserProfileComponent implements OnInit {
   }
 
   onSubmit(): void {
+    // Debug: Log form validation status
+    console.log('Form valid:', this.profileForm.valid);
+    console.log('Form errors:', this.getFormErrors());
+    console.log('Current user status:', this.currentUserStatus);
+    
     if (this.profileForm.valid) {
       this.isSubmitting = true;
       
       const profileData = this.profileForm.value;
       
-      // Use UserService to submit profile for approval
+      // Submit the profile for approval
       this.userService.submitProfileForApproval(profileData);
       
-      // Subscribe to the submission result
-      this.userService.user$.subscribe(user => {
-        if (user && this.isSubmitting) {
-          this.isSubmitting = false;
-          this.submitSuccess = true;
-          this.isEditing = false;
-          
-          // Update current status
-          this.currentUserStatus = user.status || UserStatus.PENDING_APPROVAL;
-          
-          // Reset success message after 5 seconds
-          setTimeout(() => {
-            this.submitSuccess = false;
-          }, 5000);
-        }
-      });
-      
-      // Handle errors
+      // Subscribe to success/error states
       this.userService.error$.subscribe(error => {
         if (error && this.isSubmitting) {
           this.isSubmitting = false;
           console.error('Profile submission failed:', error);
+        }
+      });
+      
+      // The profile will be automatically reloaded by the effect
+      // So we just need to handle the UI state changes
+      this.userService.user$.subscribe(user => {
+        if (user && this.isSubmitting) {
+          // Check if the status has changed (indicating successful submission)
+          const newStatus = this.mapApiStatusToEnum(user.status);
+          
+          if (newStatus !== this.currentUserStatus || newStatus === UserStatus.PENDING_APPROVAL) {
+            this.isSubmitting = false;
+            this.submitSuccess = true;
+            this.isEditing = false;
+            
+            // Update current status and re-determine editing state
+            this.currentUserStatus = newStatus;
+            this.determineEditingState(user);
+            
+            // Reset success message after 5 seconds
+            setTimeout(() => {
+              this.submitSuccess = false;
+            }, 5000);
+          }
         }
       });
     } else {
@@ -336,6 +358,7 @@ export class UserProfileComponent implements OnInit {
       city: 'City',
       state: 'State',
       zipCode: 'ZIP Code',
+      nationalId: 'National ID',
       dateOfBirth: 'Date of Birth',
       occupation: 'Occupation',
       annualIncome: 'Annual Income',
@@ -410,7 +433,40 @@ export class UserProfileComponent implements OnInit {
     }
   }
 
+  // Debug helper method
+  getFormErrors(): any {
+    const formErrors: any = {};
+    Object.keys(this.profileForm.controls).forEach(key => {
+      const controlErrors = this.profileForm.get(key)?.errors;
+      if (controlErrors) {
+        formErrors[key] = controlErrors;
+      }
+    });
+    return formErrors;
+  }
+
+  // Helper method to format date for HTML date input (YYYY-MM-DD format)
+  private formatDateForInput(dateValue: string): string {
+    if (!dateValue) return '';
+    
+    try {
+      // Handle ISO string format like "1985-05-15T00:00:00"
+      const date = new Date(dateValue);
+      if (isNaN(date.getTime())) return '';
+      
+      // Format as YYYY-MM-DD for HTML date input
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      
+      return `${year}-${month}-${day}`;
+    } catch (error) {
+      console.warn('Error formatting date:', dateValue, error);
+      return '';
+    }
+  }
+
   goBack(): void {
-    this.router.navigate(['/dashboard']);
+    this.router.navigate(['/dashboard/home']);
   }
 }

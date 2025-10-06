@@ -10,17 +10,24 @@ export const routes: Routes = [
   {
     path: 'dashboard',
     loadComponent: () => import('./module/dashboard/dashboard').then(m => m.DashboardComponent),
-    canActivate: [rootGuard]
-  },
-  {
-    path: 'home',
-    loadComponent: () => import('./module/home/home').then(m => m.Home),
-    canActivate: [rootGuard]
-  },
-  {
-    path: 'profile',
-    loadComponent: () => import('./module/user-profile/user-profile').then(m => m.UserProfileComponent),
-    canActivate: [rootGuard]
+    canActivate: [rootGuard],
+    children: [
+      {
+        path: 'home',
+        loadComponent: () => import('./module/dashboard/dashboard-home').then(m => m.DashboardHomeComponent),
+        canActivate: [rootGuard]
+      },
+      {
+        path: 'admin',
+        loadComponent: () => import('./module/admin/admin-dashboard').then(m => m.AdminDashboardComponent),
+        canActivate: [rootGuard]
+      },
+      {
+        path: 'profile',
+        loadComponent: () => import('./module/user-profile/user-profile').then(m => m.UserProfileComponent),
+        canActivate: [rootGuard]
+      }
+    ]
   },
   // {
   //   path: 'user-management',

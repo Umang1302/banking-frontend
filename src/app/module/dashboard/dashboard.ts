@@ -1,13 +1,8 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
-import { Store } from '@ngrx/store';
-import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
 
 import { User } from '../../store/userStore/user.action';
-import { selectUser, selectUserFullName, selectUserInitials } from '../../store/userStore/user.selectors';
-import { userActions } from '../../store/userStore/user.action';
-
 import { UserService } from '../../store/userStore/user.service';
 import { NavigationService, NavigationItem } from '../../services/navigation.service';
 
@@ -24,12 +19,10 @@ export class DashboardComponent implements OnInit {
   private navigationService = inject(NavigationService);
   
   user$ = this.userService.user$;
-  isLoading$ = this.userService.isLoading$;
-  error$ = this.userService.error$;
   userFullName$ = this.userService.userFullName$;
   userInitials$ = this.userService.userInitials$;
   
-  // Navigation items - simple array approach
+  // Navigation items
   navigationItems: NavigationItem[] = [];
 
   constructor() {
@@ -50,12 +43,22 @@ export class DashboardComponent implements OnInit {
   ngOnInit(): void {
     console.log("Dashboard component initialized");
     this.userService.loadProfile();
-  }
-
-  //print user profile
-  printUserProfile(): void {
-    this.userService.user$.subscribe(user => {
-      console.log("User Profile:", user);
+    
+    // Auto-redirect based on user role
+    this.userService.role$.subscribe(role => {
+      console.log("User Role:", role);
+      const currentPath = this.router.url;
+      
+      // Only redirect if on base dashboard path
+      if (currentPath === '/dashboard' || currentPath === '/') {
+        if (role === 'admin' || role === 'superadmin') {
+          console.log('Admin user detected, redirecting to admin dashboard');
+          this.router.navigate(['/dashboard/admin']);
+        } else if (role === 'customer') {
+          console.log('Customer user detected, redirecting to home');
+          this.router.navigate(['/dashboard/home']);
+        }
+      }
     });
   }
 

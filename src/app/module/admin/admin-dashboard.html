@@ -1,0 +1,388 @@
+<div class="admin-dashboard-container">
+  
+  <!-- Page Title and Actions -->
+  <div class="page-header">
+    <h2 class="page-title">
+      <span class="page-icon" style="font-style: normal !important;">🛠️</span>
+      Admin Dashboard
+    </h2>
+    <button class="refresh-btn" (click)="refreshDashboard()" [disabled]="isRefreshing">
+      <span class="refresh-icon" style="font-style: normal !important;">{{ isRefreshing ? '⟳' : '🔄' }}</span>
+      {{ isRefreshing ? 'Refreshing...' : 'Refresh' }}
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading dashboard data...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !isLoading" class="error-container">
+    <div class="error-message">
+      <span class="error-icon" style="font-style: normal !important;">⚠️</span>
+      <h3>Error Loading Dashboard</h3>
+      <p>{{ error }}</p>
+      <button (click)="refreshDashboard()" class="retry-btn">Try Again</button>
+    </div>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!isLoading && !error" class="admin-content">
+    
+    <!-- Statistics Cards -->
+    <section class="stats-section" *ngIf="dashboardData">
+      <div class="stats-grid">
+        <div class="stat-card blue">
+          <div class="stat-icon" style="font-style: normal !important;">👥</div>
+          <div class="stat-content">
+            <div class="stat-value">{{ dashboardData.totalUsers }}</div>
+            <div class="stat-label">Total Users</div>
+          </div>
+        </div>
+        
+        <div class="stat-card orange" [class.urgent]="getPendingReviewCount() > 0">
+          <div class="stat-icon" style="font-style: normal !important;">⏳</div>
+          <div class="stat-content">
+            <div class="stat-value">{{ getPendingReviewCount() }}</div>
+            <div class="stat-label">Pending Review</div>
+          </div>
+        </div>
+        
+        <div class="stat-card green">
+          <div class="stat-icon" style="font-style: normal !important;">✅</div>
+          <div class="stat-content">
+            <div class="stat-value">{{ dashboardData.userStatusCounts.ACTIVE }}</div>
+            <div class="stat-label">Active Users</div>
+          </div>
+        </div>
+        
+        <div class="stat-card purple">
+          <div class="stat-icon" style="font-style: normal !important;">🏦</div>
+          <div class="stat-content">
+            <div class="stat-value">{{ dashboardData.totalAccounts }}</div>
+            <div class="stat-label">Total Accounts</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pending Actions Alert -->
+    <section class="alerts-section" *ngIf="dashboardData && (getPendingReviewCount() > 0 || getPendingDetailsCount() > 0)">
+      <div class="alert-card urgent">
+        <div class="alert-icon" style="font-style: normal !important;">🔔</div>
+        <div class="alert-content">
+          <h3>Pending Actions Required</h3>
+          <ul>
+            <li *ngIf="getPendingDetailsCount() > 0">
+              <strong>{{ getPendingDetailsCount() }}</strong> users need to complete their details
+            </li>
+            <li *ngIf="getPendingReviewCount() > 0">
+              <strong>{{ getPendingReviewCount() }}</strong> applications awaiting your approval
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <nav class="admin-tabs">
+      <button 
+        *ngFor="let tab of tabs" 
+        class="tab-btn"
+        [class.active]="activeTab === tab.id"
+        [class.urgent]="tab.urgent && getPendingReviewCount() > 0"
+        (click)="setActiveTab(tab.id)">
+        {{ tab.label }}
+        <span *ngIf="tab.id === 'pending-review' && getPendingReviewCount() > 0" class="badge">
+          {{ getPendingReviewCount() }}
+        </span>
+        <span *ngIf="tab.id === 'pending-details' && getPendingDetailsCount() > 0" class="badge">
+          {{ getPendingDetailsCount() }}
+        </span>
+      </button>
+    </nav>
+
+    <!-- Tab Content -->
+    <main class="tab-content">
+      
+      <!-- Dashboard Overview Tab -->
+      <div *ngIf="activeTab === 'dashboard'" class="dashboard-tab">
+        <h2>📊 Dashboard Overview</h2>
+        <div class="overview-grid" *ngIf="dashboardData">
+          <div class="overview-card">
+            <h3>User Status Breakdown</h3>
+            <div class="status-list">
+              <div class="status-item">
+                <span class="status-label">Pending Details:</span>
+                <span class="status-value">{{ dashboardData.userStatusCounts.PENDING_DETAILS }}</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Pending Review:</span>
+                <span class="status-value">{{ dashboardData.userStatusCounts.PENDING_REVIEW }}</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Active:</span>
+                <span class="status-value">{{ dashboardData.userStatusCounts.ACTIVE }}</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Rejected:</span>
+                <span class="status-value">{{ dashboardData.userStatusCounts.REJECTED }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pending Details Tab -->
+      <div *ngIf="activeTab === 'pending-details'" class="pending-details-tab">
+        <h2>📝 Users Missing Customer Details ({{ pendingDetailsUsers.length }})</h2>
+        <div class="info-banner">
+          <span style="font-style: normal !important;">ℹ️</span>
+          These users have registered but haven't submitted their customer details yet.
+        </div>
+        
+        <div class="users-table" *ngIf="pendingDetailsUsers.length > 0">
+          <table>
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Mobile</th>
+                <th>Registered</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let user of pendingDetailsUsers">
+                <td>{{ user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.mobile || 'N/A' }}</td>
+                <td>{{ formatDate(user.createdAt) }}</td>
+                <td>
+                  <button class="btn-view" (click)="viewUserDetails(user)">
+                    <span style="font-style: normal !important;">👁️</span> View
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div *ngIf="pendingDetailsUsers.length === 0" class="empty-state">
+          <span style="font-style: normal !important;">✅</span>
+          <p>No users pending details completion</p>
+        </div>
+      </div>
+
+      <!-- Pending Review Tab -->
+      <div *ngIf="activeTab === 'pending-review'" class="pending-review-tab">
+        <h2>🔍 Applications Awaiting Approval ({{ pendingReviewUsers.length }})</h2>
+        <div class="alert-banner" *ngIf="pendingReviewUsers.length > 0">
+          <span style="font-style: normal !important;">⚠️</span>
+          These applications require your review and approval.
+        </div>
+        
+        <div class="users-table" *ngIf="pendingReviewUsers.length > 0">
+          <table>
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>National ID</th>
+                <th>Submitted</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let user of pendingReviewUsers">
+                <td>{{ user.username }}</td>
+                <td>{{ user.customer?.firstName }} {{ user.customer?.lastName }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.customer?.nationalId || 'N/A' }}</td>
+                <td>{{ formatDate(user.createdAt) }}</td>
+                <td class="actions-cell">
+                  <button class="btn-view" (click)="viewUserDetails(user)">
+                    <span style="font-style: normal !important;">👁️</span> Review
+                  </button>
+                  <button class="btn-approve" (click)="approveUser(user.userId)">
+                    <span style="font-style: normal !important;">✅</span> Approve
+                  </button>
+                  <button class="btn-reject" (click)="showRejectUserModal(user)">
+                    <span style="font-style: normal !important;">❌</span> Reject
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div *ngIf="pendingReviewUsers.length === 0" class="empty-state">
+          <span style="font-style: normal !important;">✅</span>
+          <p>No applications pending review</p>
+        </div>
+      </div>
+
+      <!-- All Users Tab -->
+      <div *ngIf="activeTab === 'all-users'" class="all-users-tab">
+        <h2>👥 All Users ({{ allUsers.length }})</h2>
+        
+        <div class="users-table" *ngIf="allUsers.length > 0">
+          <table>
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Role</th>
+                <th>Registered</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let user of allUsers">
+                <td>{{ user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>
+                  <span class="status-badge" [class]="'status-' + user.status.toLowerCase()">
+                    {{ user.status }}
+                  </span>
+                </td>
+                <td>{{ user.roles?.[0]?.name || 'USER' }}</td>
+                <td>{{ formatDate(user.createdAt) }}</td>
+                <td>
+                  <button class="btn-view" (click)="viewUserDetails(user)">
+                    <span style="font-style: normal !important;">👁️</span> View
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- User Details Modal -->
+<div *ngIf="showUserModal && selectedUser" class="modal-overlay" (click)="closeUserModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>📋 User Application Review</h2>
+      <span class="status-badge" [class]="'status-' + selectedUser.status.toLowerCase()">
+        {{ selectedUser.status }}
+      </span>
+      <button class="modal-close" (click)="closeUserModal()">
+        <span style="font-style: normal !important;">✕</span>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <!-- Basic Info -->
+      <section class="user-section">
+        <h3>👤 Basic Information</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Username:</label>
+            <span>{{ selectedUser.username }}</span>
+          </div>
+          <div class="info-item">
+            <label>Email:</label>
+            <span>{{ selectedUser.email }}</span>
+          </div>
+          <div class="info-item">
+            <label>Mobile:</label>
+            <span>{{ selectedUser.mobile || 'N/A' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Registered:</label>
+            <span>{{ formatDate(selectedUser.createdAt) }}</span>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Customer Details -->
+      <section class="user-section" *ngIf="selectedUser.customer">
+        <h3>🏛️ Customer Details</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Full Name:</label>
+            <span>{{ selectedUser.customer.firstName }} {{ selectedUser.customer.lastName }}</span>
+          </div>
+          <div class="info-item">
+            <label>National ID:</label>
+            <span>{{ selectedUser.customer.nationalId }}</span>
+          </div>
+          <div class="info-item full-width">
+            <label>Address:</label>
+            <span>{{ selectedUser.customer.address }}</span>
+          </div>
+        </div>
+        
+        <!-- Additional Info -->
+        <div *ngIf="selectedUser.customer.otherInfo" class="additional-info">
+          <h4>Additional Information</h4>
+          <div class="info-grid">
+            <div *ngFor="let item of parseOtherInfo(selectedUser.customer.otherInfo) | keyvalue" class="info-item">
+              <label>{{ item.key }}:</label>
+              <span>{{ item.value }}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+    
+    <div class="modal-actions" *ngIf="selectedUser.status === 'PENDING_REVIEW'">
+      <button class="btn-approve-modal" (click)="approveUser(selectedUser.userId)">
+        <span style="font-style: normal !important;">✅</span> Approve Application
+      </button>
+      <button class="btn-reject-modal" (click)="showRejectUserModal(selectedUser)">
+        <span style="font-style: normal !important;">❌</span> Reject Application
+      </button>
+      <button class="btn-cancel" (click)="closeUserModal()">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Reject User Modal -->
+<div *ngIf="showRejectModal && selectedUser" class="modal-overlay" (click)="closeRejectModal()">
+  <div class="reject-modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>❌ Reject Application</h3>
+      <button class="modal-close" (click)="closeRejectModal()">
+        <span style="font-style: normal !important;">✕</span>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <p>Are you sure you want to reject <strong>{{ selectedUser.username }}</strong>'s application?</p>
+      
+      <div class="form-group">
+        <label for="rejectionReason">Reason for rejection *</label>
+        <textarea 
+          id="rejectionReason"
+          [(ngModel)]="rejectionReason"
+          placeholder="Please provide a detailed reason for rejection..."
+          rows="4"
+          required>
+        </textarea>
+      </div>
+    </div>
+    
+    <div class="modal-actions">
+      <button 
+        class="btn-confirm-reject"
+        (click)="confirmRejectUser()"
+        [disabled]="!rejectionReason.trim()">
+        Confirm Rejection
+      </button>
+      <button class="btn-cancel" (click)="closeRejectModal()">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>

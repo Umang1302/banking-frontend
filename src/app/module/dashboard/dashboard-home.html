@@ -1,0 +1,112 @@
+<!-- Notifications Section -->
+<div class="notifications-section" *ngIf="user$ | async as user">
+  <div class="notification-container" *ngIf="user.status === 'PENDING_DETAILS'">
+    <div class="notification-card notification-warning">
+      <div class="notification-icon" style="font-style: normal !important;">⚠️</div>
+      <div class="notification-content">
+        <h4 class="notification-title">Profile Incomplete</h4>
+        <p class="notification-message">Please complete your profile to access all banking features</p>
+      </div>
+      <button class="notification-action-btn" (click)="navigateToProfile()">
+        Complete Profile
+        <span class="btn-arrow" style="font-style: normal !important;">→</span>
+      </button>
+    </div>
+  </div>
+  
+  <div class="notification-container" *ngIf="user.status === 'PENDING_APPROVAL'">
+    <div class="notification-card notification-info">
+      <div class="notification-icon" style="font-style: normal !important;">🔍</div>
+      <div class="notification-content">
+        <h4 class="notification-title">Profile Under Review</h4>
+        <p class="notification-message">Your profile is being reviewed by our team. We'll notify you once approved.</p>
+      </div>
+      <button class="notification-action-btn" (click)="navigateToProfile()">
+        View Profile
+        <span class="btn-arrow" style="font-style: normal !important;">→</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Dashboard Content -->
+<div class="dashboard-content">
+  <!-- Welcome Section -->
+  <section class="welcome-section" *ngIf="user$ | async as user">
+    <div class="welcome-content">
+      <h2 class="welcome-title">Welcome back, {{ userFullName$ | async }}!</h2>
+      <p class="welcome-subtitle">Manage your accounts and banking needs</p>
+    </div>
+    <div class="account-summary">
+      <div class="total-balance">
+        <span class="balance-label">Total Balance</span>
+        <span class="balance-amount">{{ getTotalBalance() | currency:'INR':'symbol':'1.2-2' }}</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Account Overview -->
+  <section class="accounts-section" *ngIf="user$ | async as user">
+    <h3 class="section-title">Your Accounts</h3>
+    <div class="accounts-grid">
+      @if(user && user.accounts && user.accounts.length > 0)  {
+      <div class="account-card" *ngFor="let account of getFilteredAccounts(user.accounts)">
+        <div class="account-header">
+          <div class="account-type">
+            <span class="account-icon" style="font-style: normal !important;">
+              {{ getAccountIcon(account.accountType) }}
+            </span>
+            <span class="account-type-label">{{ getAccountTypeDisplay(account.accountType) }}</span>
+          </div>
+          <span class="account-status" [class]="'status-' + account.status.toLowerCase()">
+            {{ account.status }}
+          </span>
+        </div>
+        <div class="account-details">
+          <div class="account-number">{{ account.accountNumber }}</div>
+          <div class="account-balance">
+            <span class="balance-label">Available Balance</span>
+            <span class="balance-amount">{{ account.availableBalance | currency:'INR':'symbol':'1.2-2' }}</span>
+          </div>
+          <div class="account-info" *ngIf="account.interestRate">
+            <span class="interest-rate">Interest Rate: {{ account.interestRate }}</span>
+          </div>
+        </div>
+      </div>
+      }
+      @else {
+      <div class="account-card">
+        <div class="account-header">
+          <h4>No accounts found</h4>
+        </div>
+      </div>
+      }
+    </div>
+  </section>
+
+  <!-- Banking Quick Links -->
+  <section class="quick-links-section">
+    <h3 class="section-title">Quick Actions</h3>
+    <div class="quick-links-grid">
+      <div class="quick-link-card" *ngFor="let link of quickLinks" (click)="onQuickLinkClick(link)">
+        <div class="quick-link-icon" style="font-style: normal !important;">{{ link.icon }}</div>
+        <div class="quick-link-content">
+          <h4 class="quick-link-title">{{ link.title }}</h4>
+          <p class="quick-link-description">{{ link.description }}</p>
+        </div>
+        <div class="quick-link-arrow" style="font-style: normal !important;">→</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Recent Activity Section -->
+  <section class="activity-section">
+    <h3 class="section-title">Recent Activity</h3>
+    <div class="activity-placeholder">
+      <div class="placeholder-icon" style="font-style: normal !important;">📊</div>
+      <h4>No Recent Transactions</h4>
+      <p>Your recent banking activity will appear here</p>
+    </div>
+  </section>
+</div>
+

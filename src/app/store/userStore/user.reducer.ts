@@ -129,9 +129,9 @@ export const userReducer = createReducer(
     error: null,
   })),
 
-  on(userActions.submitProfileSuccess, (state, { user }) => ({
+  on(userActions.submitProfileSuccess, (state, { status }) => ({
     ...state,
-    user,
+    status,
     isLoading: false,
     error: null,
   })),
@@ -176,6 +176,26 @@ export const userReducer = createReducer(
   })),
 
   on(userActions.rejectProfileFailure, (state, { error }) => ({
+    ...state,
+    isLoading: false,
+    error,
+  })),
+
+  // Submit profile actions
+  on(userActions.submitProfileForApproval, (state) => ({
+    ...state,
+    isLoading: true,
+    error: null,
+  })),
+  
+  on(userActions.submitProfileSuccess, (state, { status }) => ({
+    ...state,
+    status,
+    isLoading: false,
+    error: null,
+  })),
+  
+  on(userActions.submitProfileFailure, (state, { error }) => ({
     ...state,
     isLoading: false,
     error,

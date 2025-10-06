@@ -3,17 +3,17 @@
     {
       "id": "dashboard",
       "label": "Dashboard",
-      "routerLink": "/dashboard",
+      "routerLink": "/dashboard/home",
       "icon": "🏠",
-      "roles": ["user","customer","admin","superadmin"],
+      "roles": ["customer"],
       "order": 1
     },
     {
       "id": "profile",
       "label": "Profile",
-      "routerLink": "/profile",
+      "routerLink": "/dashboard/profile",
       "icon": "👤",
-      "roles": ["user", "admin", "superadmin","customer"],
+      "roles": ["customer"],
       "order": 2
     },
     {
@@ -21,7 +21,7 @@
       "label": "My Accounts",
       "routerLink": "/accounts",
       "icon": "💳",
-      "roles": ["admin", "superadmin","customer"],
+      "roles": [],
       "order": 3
     },
     {
@@ -29,7 +29,7 @@
       "label": "Transfers",
       "routerLink": "/transfers",
       "icon": "💸",
-      "roles": ["customer"],
+      "roles": [],
       "order": 4
     },
     {
@@ -37,16 +37,16 @@
       "label": "Transaction History",
       "routerLink": "/transactions",
       "icon": "📋",
-      "roles": ["customer"],
+      "roles": [],
       "order": 5
     },
     {
       "id": "admin-dashboard",
       "label": "Admin Dashboard",
-      "routerLink": "/admin-dashboard",
-      "icon": "⚙️",
+      "routerLink": "/dashboard/admin",
+      "icon": "🛠️",
       "roles": ["admin", "superadmin"],
-      "order": 10
+      "order": 1
     },
     {
       "id": "user-management",
