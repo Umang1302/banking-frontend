@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../../services/api.service';
+import { UserService } from '../../../store/userStore/user.service';
 
 
 @Component({
@@ -14,6 +15,7 @@ import { ApiService } from '../../../services/api.service';
 export class Login {
   private apiService = inject(ApiService);
   private router = inject(Router);
+  private userService = inject(UserService);
   username = signal('');
   password = signal('');
   rememberMe = signal(false);
@@ -31,7 +33,7 @@ export class Login {
     if (token) {
       // Use setTimeout to ensure router is ready
       setTimeout(() => {
-        this.router.navigate(['/']);
+        this.router.navigate(['/dashboard']);
       }, 0);
     }
   }
@@ -140,22 +142,11 @@ export class Login {
       return;
     }
     
-    this.isLoading.set(true);
-    
-    this.apiService.post('auth/login', {
+    // Use the user service to handle login
+    // Redirection will be handled by the effects after successful login
+    this.userService.login({
       usernameOrEmailOrMobile: this.username(),
       password: this.password()
-    }).subscribe({
-      next: (response: any) => {
-        this.isLoading.set(false);
-        alert(`Login successful! Backend status: ${response.status}`);
-        localStorage.setItem('token', response.token);
-        this.router.navigate(['/']);
-      },
-      error: (err) => {
-        this.isLoading.set(false);
-        alert(`Login failed! ${err.message}`);
-      }
     });
   }
 }

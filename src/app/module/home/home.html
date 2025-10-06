@@ -1,2 +1,47 @@
-<h1>Hello World</h1>
-<button (click)="logout()">Logout</button>
+<div class="home-container">
+  <div class="user-info" *ngIf="userService.user$ | async as user">
+    <div class="user-header">
+      <div class="user-avatar">
+        {{ userService.userInitials$ | async }}
+      </div>
+      <div class="user-details">
+        <h2>Welcome back!</h2>
+        <p class="user-name">{{ getUserDisplayName(user) }}</p>
+        <p class="user-full-name" *ngIf="getUserFullName(user)">{{ getUserFullName(user) }}</p>
+        <p class="user-email">{{ user.email }}</p>
+        <p class="user-mobile" *ngIf="user.mobile">{{ user.mobile }}</p>
+      </div>
+    </div>
+    
+    <div class="user-stats">
+      <div class="stat-item">
+        <span class="stat-label">User ID:</span>
+        <span class="stat-value">{{ user.id }}</span>
+      </div>
+      <div class="stat-item" *ngIf="user.role">
+        <span class="stat-label">Role:</span>
+        <span class="stat-value">{{ user.role }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading" *ngIf="userService.isLoading$ | async">
+    Loading user information...
+  </div>
+
+  <div class="error" *ngIf="userService.error$ | async as error">
+    <p>Error: {{ error }}</p>
+  </div>
+
+  <div class="actions">
+    <button class="logout-btn" (click)="logout()" *ngIf="userService.isAuthenticated$ | async">Logout</button>
+    <button class="debug-btn" (click)="logCurrentUser()" *ngIf="userService.isAuthenticated$ | async">Log User Data</button>
+  </div>
+
+  <!-- Not authenticated state -->
+  <div class="not-authenticated" *ngIf="!(userService.isAuthenticated$ | async)">
+    <h2>Welcome to Banking Frontend</h2>
+    <p>Please log in to access your account.</p>
+    <a routerLink="/login" class="login-link" (click)="logout()">Go to Login</a>
+  </div>
+</div>

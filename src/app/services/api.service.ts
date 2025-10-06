@@ -16,14 +16,22 @@ export class ApiService {
     });
   }
 
-  // Generic GET method
-  get(endpoint: string): Observable<any> {
+  get(endpoint: string, options: any = {}): Observable<any> {
+    let httpHeaders = this.getHeaders();
+    
+    if (options.headers) {
+      Object.keys(options.headers).forEach(key => {
+        if (options.headers[key] !== undefined) {
+          httpHeaders = httpHeaders.set(key, options.headers[key]);
+        }
+      });
+    }
+    
     return this.http.get(`${this.baseUrl}/${endpoint}`, {
-      headers: this.getHeaders()
+      headers: httpHeaders
     });
   }
 
-  // Generic POST method
   post(endpoint: string, data: any, headers: any = {}): Observable<any> {
     console.log(data,headers);
     let httpHeaders = this.getHeaders();

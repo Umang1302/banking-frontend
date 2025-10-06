@@ -1,0 +1,84 @@
+{
+  "items": [
+    {
+      "id": "dashboard",
+      "label": "Dashboard",
+      "routerLink": "/dashboard",
+      "icon": "🏠",
+      "roles": ["user","customer","admin","superadmin"],
+      "order": 1
+    },
+    {
+      "id": "profile",
+      "label": "Profile",
+      "routerLink": "/profile",
+      "icon": "👤",
+      "roles": ["user", "admin", "superadmin","customer"],
+      "order": 2
+    },
+    {
+      "id": "accounts",
+      "label": "My Accounts",
+      "routerLink": "/accounts",
+      "icon": "💳",
+      "roles": ["admin", "superadmin","customer"],
+      "order": 3
+    },
+    {
+      "id": "transfers",
+      "label": "Transfers",
+      "routerLink": "/transfers",
+      "icon": "💸",
+      "roles": ["customer"],
+      "order": 4
+    },
+    {
+      "id": "transactions",
+      "label": "Transaction History",
+      "routerLink": "/transactions",
+      "icon": "📋",
+      "roles": ["customer"],
+      "order": 5
+    },
+    {
+      "id": "admin-dashboard",
+      "label": "Admin Dashboard",
+      "routerLink": "/admin-dashboard",
+      "icon": "⚙️",
+      "roles": ["admin", "superadmin"],
+      "order": 10
+    },
+    {
+      "id": "user-management",
+      "label": "User Management",
+      "routerLink": "/user-management",
+      "icon": "👥",
+      "roles": ["admin", "superadmin"],
+      "order": 11
+    },
+    {
+      "id": "reports",
+      "label": "Reports",
+      "routerLink": "/reports",
+      "icon": "📊",
+      "roles": ["admin", "superadmin"],
+      "order": 12
+    },
+    {
+      "id": "system-settings",
+      "label": "System Settings",
+      "routerLink": "/system-settings",
+      "icon": "🔧",
+      "roles": ["superadmin"],
+      "order": 20
+    },
+    {
+      "id": "audit-logs",
+      "label": "Audit Logs",
+      "routerLink": "/audit-logs",
+      "icon": "📝",
+      "roles": ["superadmin"],
+      "order": 21
+    }
+  ]
+}
