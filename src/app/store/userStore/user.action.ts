@@ -148,6 +148,10 @@ export const userActions = createActionGroup({
         'Reject Profile Success': props<{ user: User }>(),
         'Reject Profile Failure': props<{ error: string }>(),
 
+        // Session management actions
+        'Session Expired': emptyProps(),
+        'Check Session Expiry': emptyProps(),
+
         // Utility actions
         'Clear Error': emptyProps(),
         'Initialize User State': emptyProps(),

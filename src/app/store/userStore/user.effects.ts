@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import { map, exhaustMap, catchError, tap } from 'rxjs/operators';
 
 import { ApiService } from '../../services/api.service';
+import { SessionService } from '../../services/session.service';
 import { userActions, AuthResponse, UserStatus, UserRole } from './user.action';
 
 @Injectable()
@@ -12,6 +13,7 @@ export class UserEffects {
   private actions$ = inject(Actions);
   private apiService = inject(ApiService);
   private router = inject(Router);
+  private sessionService = inject(SessionService);
 
   // Login effect
   login$ = createEffect(() =>
@@ -20,8 +22,9 @@ export class UserEffects {
       exhaustMap(({ credentials }) =>
         this.apiService.post('auth/login', credentials).pipe(
           map((response: any) => {
-            // Store token in localStorage
-            localStorage.setItem('token', response.token);
+            // Store token with expiry using SessionService
+            this.sessionService.storeTokenWithExpiry(response.token, response.expiresIn);
+            
             console.log("response", response);
             const authResponse: AuthResponse = {
               user: response.user || {
@@ -56,8 +59,8 @@ export class UserEffects {
         return this.apiService.post('auth/register', userData).pipe(
           map((response: any) => {
             console.log('Register API response:', response);
-            // Store token in localStorage
-            localStorage.setItem('token', response.token);
+            // Store token with expiry using SessionService
+            this.sessionService.storeTokenWithExpiry(response.token, response.expiresIn);
             
             const authResponse: AuthResponse = {
               user: response.user || {
@@ -92,7 +95,7 @@ export class UserEffects {
     this.actions$.pipe(
       ofType(userActions.logoutRequest),
       map(() => {
-        localStorage.removeItem('token');
+        this.sessionService.clearSession();
         console.log("Logout success");
         return userActions.logoutSuccess();
       }),
@@ -329,6 +332,18 @@ export class UserEffects {
       })
     ),
     { dispatch: false }
+  );
+
+  // Session expired effect
+  sessionExpired$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(userActions.sessionExpired),
+      tap(() => {
+        console.warn('Session has expired');
+        this.sessionService.clearSession();
+      }),
+      map(() => userActions.logoutSuccess())
+    )
   );
 
 }

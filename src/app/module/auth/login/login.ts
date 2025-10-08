@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { ApiService } from '../../../services/api.service';
 import { UserService } from '../../../store/userStore/user.service';
 
@@ -15,6 +15,7 @@ import { UserService } from '../../../store/userStore/user.service';
 export class Login {
   private apiService = inject(ApiService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private userService = inject(UserService);
   username = signal('');
   password = signal('');
@@ -26,6 +27,9 @@ export class Login {
   usernameError = signal('');
   passwordError = signal('');
   isFormTouched = signal(false);
+  
+  // Session expiry message
+  sessionExpiredMessage = signal('');
 
   constructor() {
     // Check if user is already logged in
@@ -36,6 +40,22 @@ export class Login {
         this.router.navigate(['/dashboard']);
       }, 0);
     }
+    
+    // Check if session expired query parameter is present
+    this.route.queryParams.subscribe(params => {
+      if (params['sessionExpired'] === 'true') {
+        this.sessionExpiredMessage.set('Your session has expired. Please login again.');
+        // Clear the query parameter after a delay
+        setTimeout(() => {
+          this.sessionExpiredMessage.set('');
+          this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: {},
+            replaceUrl: true
+          });
+        }, 5000);
+      }
+    });
   }
 
 
