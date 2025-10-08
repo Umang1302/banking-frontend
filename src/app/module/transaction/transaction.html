@@ -1,0 +1,20 @@
+<div class="transaction-page">
+  <!-- Tabs Navigation -->
+  <nav class="transaction-tabs">
+    <a 
+      *ngFor="let tab of getVisibleTabs()" 
+      [routerLink]="tab.route"
+      routerLinkActive="active"
+      class="tab-link"
+    >
+      <span class="tab-icon">{{ tab.icon }}</span>
+      <span class="tab-label">{{ tab.label }}</span>
+    </a>
+  </nav>
+
+  <!-- Tab Content -->
+  <div class="transaction-content">
+    <router-outlet></router-outlet>
+  </div>
+</div>
+

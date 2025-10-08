@@ -13,7 +13,7 @@
       "label": "Profile",
       "routerLink": "/dashboard/profile",
       "icon": "👤",
-      "roles": ["customer"],
+      "roles": ["customer", "accountant", "admin", "superadmin"],
       "order": 2
     },
     {
@@ -34,11 +34,41 @@
     },
     {
       "id": "transactions",
-      "label": "Transaction History",
-      "routerLink": "/transactions",
+      "label": "Transactions",
+      "routerLink": "/dashboard/transactions",
       "icon": "📋",
-      "roles": [],
-      "order": 5
+      "roles": ["customer", "accountant"],
+      "order": 5,
+      "children": [
+        {
+          "id": "transaction-history",
+          "label": "Transaction History",
+          "routerLink": "/dashboard/transactions/history",
+          "icon": "📊",
+          "roles": ["customer", "admin", "superadmin"]
+        },
+        {
+          "id": "new-transaction",
+          "label": "New Transaction",
+          "routerLink": "/dashboard/transactions/create",
+          "icon": "💳",
+          "roles": ["customer", "admin", "superadmin"]
+        },
+        {
+          "id": "bulk-upload",
+          "label": "Bulk Upload",
+          "routerLink": "/dashboard/transactions/bulk-upload",
+          "icon": "📤",
+          "roles": ["accountant", "admin", "superadmin"]
+        },
+        {
+          "id": "statements",
+          "label": "Statements",
+          "routerLink": "/dashboard/transactions/statements",
+          "icon": "📄",
+          "roles": ["customer","admin", "superadmin"]
+        }
+      ]
     },
     {
       "id": "admin-dashboard",

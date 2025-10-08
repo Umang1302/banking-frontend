@@ -117,10 +117,14 @@ export class UserEffects {
         const userRole = user.roles?.[0]?.name || user.role;
         console.log("userRole", userRole);
         const isAdmin = userRole === 'admin' || userRole === 'superadmin';
+        const isAccountant = userRole === 'accountant';
         
         if (isAdmin) {
           // Redirect admin users to admin dashboard
           this.router.navigate(['/dashboard/admin']);
+        } else if (isAccountant) {
+          // Redirect accountant users directly to bulk-upload
+          this.router.navigate(['/dashboard/transactions/bulk-upload']);
         } else if (!isProfileComplete) {
           // Redirect to profile page if incomplete
           this.router.navigate(['/dashboard/profile'], { 
@@ -160,10 +164,14 @@ export class UserEffects {
         // Check if user is admin
         const userRole = user.roles?.[0]?.name || user.role;
         const isAdmin = userRole === 'admin' || userRole === 'superadmin';
+        const isAccountant = userRole === 'accountant';
         
         if (isAdmin) {
           // Redirect admin users to admin dashboard
           this.router.navigate(['/dashboard/admin']);
+        } else if (isAccountant) {
+          // Redirect accountant users directly to bulk-upload
+          this.router.navigate(['/dashboard/transactions/bulk-upload']);
         } else if (!isProfileComplete) {
           // Redirect to profile page for profile completion
           this.router.navigate(['/dashboard/profile'], { 
@@ -217,6 +225,7 @@ export class UserEffects {
               roles: response.roles || [],
               permissions: response.permissions || [],
               accounts: response.accounts || [],
+              transactions: response.recentTransactions || [],
               // Extract fields from customer object for backward compatibility
               firstName: customer?.firstName,
               lastName: customer?.lastName,

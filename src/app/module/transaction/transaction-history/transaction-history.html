@@ -1,0 +1,229 @@
+    <div class="transaction-history">
+      <div class="filters-section">
+        <div class="filters-header">
+          <h3>Transaction History</h3>
+        </div>
+
+        <!-- Account Selection -->
+        <div class="form-group" *ngIf="userAccounts.length > 1">
+          <label>Select Account</label>
+          <select 
+            [(ngModel)]="accountNumber"
+            (ngModelChange)="onAccountChange()"
+            class="form-control"
+          >
+            <option *ngFor="let account of userAccounts" [value]="account.accountNumber">
+              {{ account.accountNumber }} - {{ getAccountTypeDisplay(account.accountType) }} 
+              ({{ account.currency }} {{ account.availableBalance }})
+            </option>
+          </select>
+          <p class="account-hint">
+            Viewing transactions for selected account
+          </p>
+        </div>
+        
+        <!-- Date Range Filters -->
+        <div class="date-filters">
+      <div class="form-group">
+        <label>Start Date</label>
+        <input 
+          type="date" 
+          [(ngModel)]="startDate"
+          class="form-control"
+        />
+      </div>
+      <div class="form-group">
+        <label>End Date</label>
+        <input 
+          type="date" 
+          [(ngModel)]="endDate"
+          class="form-control"
+        />
+      </div>
+      <div class="filter-actions">
+        <button (click)="loadTransactions()" class="btn btn-primary">
+          🔍 Filter
+        </button>
+        <button (click)="clearFilters()" class="btn btn-secondary">
+          Clear
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading transactions...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-message">
+    <p>{{ error }}</p>
+    <button (click)="loadTransactions()" class="btn btn-primary">Retry</button>
+  </div>
+
+  <!-- Transaction Table -->
+  <div *ngIf="!loading && !error && transactions.length > 0" class="table-container">
+    <table class="transaction-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Reference</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Amount</th>
+          <th>Balance</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let txn of transactions" [class]="'txn-' + txn.transactionType.toLowerCase()">
+          <td>{{ formatDate(txn.transactionDate) }}</td>
+          <td class="ref-cell">{{ txn.transactionReference }}</td>
+          <td>
+            <span [class]="'badge badge-' + txn.transactionType.toLowerCase()">
+              {{ txn.transactionType }}
+            </span>
+          </td>
+          <td>{{ txn.description || '-' }}</td>
+          <td [class]="txn.transactionType === 'DEBIT' ? 'amount negative' : 'amount positive'">
+            {{ txn.transactionType === 'DEBIT' ? '-' : '+' }}
+            {{ txn.currency }} {{ formatAmount(txn.amount) }}
+          </td>
+          <td>{{ txn.currency }} {{ formatAmount(txn.balanceAfter) }}</td>
+          <td>
+            <span [class]="'status-badge status-' + txn.status.toLowerCase()">
+              {{ txn.status }}
+            </span>
+          </td>
+          <td>
+            <button (click)="viewDetails(txn)" class="btn-icon" title="View Details">
+              👁️
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="transaction-count">
+      Total: {{ transactionCount }} transactions
+    </div>
+  </div>
+
+  <!-- No Transactions State -->
+  <div *ngIf="!loading && !error && transactions.length === 0" class="no-transactions">
+    <div class="placeholder-icon">📭</div>
+    <h4>No transactions found</h4>
+    <p>No transactions found for the selected period.</p>
+  </div>
+
+  <!-- Transaction Details Modal -->
+  <div *ngIf="selectedTransaction" class="modal-overlay" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Transaction Details</h3>
+        <button (click)="closeModal()" class="close-btn">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Transaction Reference</label>
+            <div class="value">
+              {{ selectedTransaction.transactionReference }}
+              <button 
+                (click)="copyToClipboard(selectedTransaction.transactionReference)"
+                class="copy-btn"
+                title="Copy to clipboard"
+              >
+                📋
+              </button>
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <label>Transaction Type</label>
+            <div class="value">
+              <span [class]="'badge badge-' + selectedTransaction.transactionType.toLowerCase()">
+                {{ selectedTransaction.transactionType }}
+              </span>
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <label>Amount</label>
+            <div [class]="selectedTransaction.transactionType === 'DEBIT' ? 'value amount negative' : 'value amount positive'">
+              {{ selectedTransaction.transactionType === 'DEBIT' ? '-' : '+' }}
+              {{ selectedTransaction.currency }} {{ formatAmount(selectedTransaction.amount) }}
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <label>Status</label>
+            <div class="value">
+              <span [class]="'status-badge status-' + selectedTransaction.status.toLowerCase()">
+                {{ selectedTransaction.status }}
+              </span>
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <label>Account Number</label>
+            <div class="value">{{ selectedTransaction.accountNumber }}</div>
+          </div>
+
+          <div class="detail-item" *ngIf="selectedTransaction.destinationAccountNumber">
+            <label>Destination Account</label>
+            <div class="value">{{ selectedTransaction.destinationAccountNumber }}</div>
+          </div>
+
+          <div class="detail-item">
+            <label>Balance Before</label>
+            <div class="value">
+              {{ selectedTransaction.currency }} {{ formatAmount(selectedTransaction.balanceBefore) }}
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <label>Balance After</label>
+            <div class="value">
+              {{ selectedTransaction.currency }} {{ formatAmount(selectedTransaction.balanceAfter) }}
+            </div>
+          </div>
+
+          <div class="detail-item" *ngIf="selectedTransaction.category">
+            <label>Category</label>
+            <div class="value">{{ selectedTransaction.category }}</div>
+          </div>
+
+          <div class="detail-item full-width" *ngIf="selectedTransaction.description">
+            <label>Description</label>
+            <div class="value">{{ selectedTransaction.description }}</div>
+          </div>
+
+          <div class="detail-item" *ngIf="selectedTransaction.referenceNumber">
+            <label>Reference Number</label>
+            <div class="value">{{ selectedTransaction.referenceNumber }}</div>
+          </div>
+
+          <div class="detail-item">
+            <label>Transaction Date</label>
+            <div class="value">{{ formatDate(selectedTransaction.transactionDate) }}</div>
+          </div>
+
+          <div class="detail-item" *ngIf="selectedTransaction.initiatedBy">
+            <label>Initiated By</label>
+            <div class="value">{{ selectedTransaction.initiatedBy }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button (click)="closeModal()" class="btn btn-secondary">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+

@@ -100,9 +100,40 @@
   </section>
 
   <!-- Recent Activity Section -->
-  <section class="activity-section">
-    <h3 class="section-title">Recent Activity</h3>
-    <div class="activity-placeholder">
+  <section class="activity-section" *ngIf="user$ | async as user">
+    <div class="section-header">
+      <h3 class="section-title">Recent Activity</h3>
+      <button class="view-all-btn" (click)="viewAllTransactions()" *ngIf="user.transactions && user.transactions.length > 0">
+        View All →
+      </button>
+    </div>
+    
+    <!-- Transactions List -->
+    <div class="transactions-list" *ngIf="user.transactions && getRecentTransactions(user.transactions).length > 0">
+      <div class="transaction-item" *ngFor="let transaction of getRecentTransactions(user.transactions)">
+        <div class="transaction-icon" [class]="'icon-' + transaction.transactionType.toLowerCase()" style="font-style: normal !important;">
+          {{ getTransactionIcon(transaction.transactionType) }}
+        </div>
+        <div class="transaction-details">
+          <div class="transaction-main">
+            <span class="transaction-description">{{ transaction.description || transaction.category }}</span>
+            <span class="transaction-amount" [class]="transaction.transactionType === 'DEBIT' ? 'amount-negative' : 'amount-positive'">
+              {{ transaction.transactionType === 'DEBIT' ? '-' : '+' }}
+              {{ transaction.currency }} {{ formatAmount(transaction.amount) }}
+            </span>
+          </div>
+          <div class="transaction-meta">
+            <span class="transaction-date">{{ formatTransactionDate(transaction.transactionDate) }}</span>
+            <span class="transaction-status" [class]="'status-' + transaction.status.toLowerCase()">
+              {{ transaction.status }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- No Transactions Placeholder -->
+    <div class="activity-placeholder" *ngIf="!user.transactions || getRecentTransactions(user.transactions).length === 0">
       <div class="placeholder-icon" style="font-style: normal !important;">📊</div>
       <h4>No Recent Transactions</h4>
       <p>Your recent banking activity will appear here</p>

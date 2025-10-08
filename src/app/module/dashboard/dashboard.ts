@@ -54,6 +54,9 @@ export class DashboardComponent implements OnInit {
         if (role === 'admin' || role === 'superadmin') {
           console.log('Admin user detected, redirecting to admin dashboard');
           this.router.navigate(['/dashboard/admin']);
+        } else if (role === 'accountant') {
+          console.log('Accountant user detected, redirecting to bulk-upload');
+          this.router.navigate(['/dashboard/transactions/bulk-upload']);
         } else if (role === 'customer') {
           console.log('Customer user detected, redirecting to home');
           this.router.navigate(['/dashboard/home']);

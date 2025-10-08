@@ -250,7 +250,7 @@
                     {{ user.status }}
                   </span>
                 </td>
-                <td>{{ user.roles?.[0]?.name || 'USER' }}</td>
+                <td>{{ user.roles?.[0]?.name}}</td>
                 <td>{{ formatDate(user.createdAt) }}</td>
                 <td>
                   <button class="btn-view" (click)="viewUserDetails(user)">

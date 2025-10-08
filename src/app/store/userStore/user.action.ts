@@ -30,6 +30,25 @@ export interface Account {
   lastTransactionDate?: string;
 }
 
+// Transaction interface
+export interface Transaction {
+  transactionId: number;
+  transactionReference: string;
+  transactionType: string;
+  amount: string;
+  currency: string;
+  accountNumber: string;
+  destinationAccountNumber?: string;
+  description?: string;
+  category?: string;
+  status: string;
+  balanceBefore?: string;
+  balanceAfter?: string;
+  transactionDate: string;
+  initiatedBy?: string;
+  referenceNumber?: string;
+}
+
 // Customer interface
 export interface Customer {
   customerId: number;
@@ -69,6 +88,7 @@ export interface User {
   permissions?: string[];
   customer?: Customer;
   accounts?: Account[];
+  transactions?: Transaction[];
   // Additional profile fields
   address?: string;
   city?: string;

@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { rootGuard } from './auth-guard/authorization';
+import { roleGuard } from './auth-guard/role.guard';
 
 export const routes: Routes = [
   {
@@ -15,24 +16,51 @@ export const routes: Routes = [
       {
         path: 'home',
         loadComponent: () => import('./module/dashboard/dashboard-home').then(m => m.DashboardHomeComponent),
-        canActivate: [rootGuard]
+        canActivate: [rootGuard, roleGuard]
       },
       {
         path: 'admin',
         loadComponent: () => import('./module/admin/admin-dashboard').then(m => m.AdminDashboardComponent),
-        canActivate: [rootGuard]
+        canActivate: [rootGuard, roleGuard]
       },
       {
         path: 'profile',
         loadComponent: () => import('./module/user-profile/user-profile').then(m => m.UserProfileComponent),
-        canActivate: [rootGuard]
+        canActivate: [rootGuard, roleGuard]
+      },
+      {
+        path: 'transactions',
+        loadComponent: () => import('./module/transaction/transaction').then(m => m.TransactionComponent),
+        canActivate: [rootGuard, roleGuard],
+        children: [
+          {
+            path: 'history',
+            loadComponent: () => import('./module/transaction/transaction-history/transaction-history').then(m => m.TransactionHistoryComponent),
+            canActivate: [rootGuard, roleGuard]
+          },
+          {
+            path: 'create',
+            loadComponent: () => import('./module/transaction/create-transaction/create-transaction').then(m => m.CreateTransactionComponent),
+            canActivate: [rootGuard, roleGuard]
+          },
+          {
+            path: 'bulk-upload',
+            loadComponent: () => import('./module/transaction/bulk-upload/bulk-upload').then(m => m.BulkUploadComponent),
+            canActivate: [rootGuard, roleGuard]
+          },
+          {
+            path: 'statements',
+            loadComponent: () => import('./module/transaction/statement/statement').then(m => m.StatementComponent),
+            canActivate: [rootGuard, roleGuard]
+          }
+        ]
       }
     ]
   },
   // {
   //   path: 'user-management',
   //   loadComponent: () => import('./module/user-management/user-management').then(m => m.UserManagementComponent),
-  //   canActivate: [rootGuard]
+  //   canActivate: [rootGuard, roleGuard]
   // },
   { path: 'login', loadComponent: () => import('./module/auth/login/login').then(m => m.Login) },
   { path: 'register', loadComponent: () => import('./module/auth/register/register').then(m => m.Register) },

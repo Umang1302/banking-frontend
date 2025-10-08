@@ -2,7 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 
-import { User, Account } from '../../store/userStore/user.action';
+import { User, Account, Transaction } from '../../store/userStore/user.action';
 import { UserService } from '../../store/userStore/user.service';
 
 export interface QuickLink {
@@ -133,13 +133,13 @@ export class DashboardHomeComponent implements OnInit {
       // Handle specific actions
       switch (link.action) {
         case 'transfer':
-          console.log('Navigate to transfer page');
+          this.router.navigate(['/dashboard/transactions/create']);
           break;
         case 'pay-bills':
           console.log('Navigate to bill payment');
           break;
         case 'statements':
-          console.log('Navigate to statements');
+          this.router.navigate(['/dashboard/transactions/statements']);
           break;
         case 'apply-loan':
           console.log('Navigate to loan application');
@@ -152,6 +152,56 @@ export class DashboardHomeComponent implements OnInit {
           break;
       }
     }
+  }
+
+  getRecentTransactions(transactions: Transaction[] | undefined): Transaction[] {
+    if (!transactions || transactions.length === 0) {
+      return [];
+    }
+    // Sort by date (newest first) and return top 5
+    return [...transactions]
+      .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime())
+      .slice(0, 5);
+  }
+
+  formatTransactionDate(dateString: string): string {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      return 'Today';
+    } else if (diffDays === 1) {
+      return 'Yesterday';
+    } else if (diffDays < 7) {
+      return `${diffDays} days ago`;
+    } else {
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+      });
+    }
+  }
+
+  formatAmount(amount: string): string {
+    return parseFloat(amount).toFixed(2);
+  }
+
+  getTransactionIcon(type: string): string {
+    const icons: { [key: string]: string } = {
+      'DEBIT': '💸',
+      'CREDIT': '💰',
+      'TRANSFER': '🔄',
+      'WITHDRAWAL': '🏧',
+      'DEPOSIT': '💵'
+    };
+    return icons[type] || '💳';
+  }
+
+  viewAllTransactions(): void {
+    this.router.navigate(['/dashboard/transactions/history']);
   }
 }
 
