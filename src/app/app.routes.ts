@@ -92,6 +92,27 @@ export const routes: Routes = [
         ]
       },
       {
+        path: 'rtgs',
+        canActivate: [rootGuard],
+        children: [
+          {
+            path: '',
+            redirectTo: 'transfer',
+            pathMatch: 'full'
+          },
+          {
+            path: 'transfer',
+            loadComponent: () => import('./module/rtgs/transfer/rtgs-transfer/rtgs-transfer.component').then(m => m.RtgsTransferComponent),
+            canActivate: [rootGuard, roleGuard]
+          },
+          {
+            path: 'history',
+            loadComponent: () => import('./module/rtgs/transfer/rtgs-history/rtgs-history.component').then(m => m.RtgsHistoryComponent),
+            canActivate: [rootGuard, roleGuard]
+          }
+        ]
+      },
+      {
         path: 'admin-neft',
         canActivate: [rootGuard],
         children: [
@@ -128,6 +149,32 @@ export const routes: Routes = [
           {
             path: 'beneficiaries',
             loadComponent: () => import('./module/neft/admin/beneficiary-management/beneficiary-management.component').then(m => m.BeneficiaryManagementComponent),
+            canActivate: [rootGuard, roleGuard]
+          }
+        ]
+      },
+      {
+        path: 'admin-rtgs',
+        canActivate: [rootGuard],
+        children: [
+          {
+            path: '',
+            redirectTo: 'dashboard',
+            pathMatch: 'full'
+          },
+          {
+            path: 'dashboard',
+            loadComponent: () => import('./module/rtgs/admin/admin-rtgs-dashboard/admin-rtgs-dashboard.component').then(m => m.AdminRtgsDashboardComponent),
+            canActivate: [rootGuard, roleGuard]
+          },
+          {
+            path: 'transactions',
+            loadComponent: () => import('./module/rtgs/admin/admin-rtgs-transaction-list/admin-rtgs-transaction-list.component').then(m => m.AdminRtgsTransactionListComponent),
+            canActivate: [rootGuard, roleGuard]
+          },
+          {
+            path: 'transactions/:reference',
+            loadComponent: () => import('./module/rtgs/admin/admin-rtgs-transaction-details/admin-rtgs-transaction-details.component').then(m => m.AdminRtgsTransactionDetailsComponent),
             canActivate: [rootGuard, roleGuard]
           }
         ]

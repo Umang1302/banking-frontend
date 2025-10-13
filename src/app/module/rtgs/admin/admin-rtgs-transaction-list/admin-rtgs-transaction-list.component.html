@@ -1,0 +1,73 @@
+<div class="transaction-list-container">
+  <div class="page-header">
+    <h1 class="page-title">RTGS Transactions</h1>
+    <p class="page-subtitle">View and manage all RTGS transactions</p>
+  </div>
+
+  <div class="filter-panel">
+    <div class="search-box">
+      <input
+        type="text"
+        placeholder="Search by reference, customer, or beneficiary"
+        [value]="searchTerm()"
+        (input)="onSearchChange($event)"
+        class="search-input"
+      />
+    </div>
+    <div class="filter-group">
+      <select
+        [value]="statusFilter()"
+        (change)="onStatusFilterChange($event)"
+        class="filter-select"
+      >
+        <option value="ALL">All Status</option>
+        <option value="PROCESSING">Processing</option>
+        <option value="COMPLETED">Completed</option>
+        <option value="FAILED">Failed</option>
+      </select>
+    </div>
+  </div>
+
+  <div *ngIf="loading()" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading transactions...</p>
+  </div>
+
+  <div *ngIf="error()" class="error-state">
+    <p class="error-message">{{ error() }}</p>
+    <button class="btn btn-secondary" (click)="loadTransactions()">Retry</button>
+  </div>
+
+  <div *ngIf="!loading() && !error()" class="transactions-table">
+    <table>
+      <thead>
+        <tr>
+          <th>Reference</th>
+          <th>Customer</th>
+          <th>Beneficiary</th>
+          <th>Amount</th>
+          <th>Charges</th>
+          <th>Status</th>
+          <th>Date/Time</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let txn of filteredTransactions()" (click)="viewTransactionDetails(txn.eftReference)">
+          <td class="ref-cell">{{ txn.eftReference }}</td>
+          <td>{{ txn.sourceAccount?.customer?.firstName }} {{ txn.sourceAccount?.customer?.lastName }}</td>
+          <td>{{ txn.beneficiaryName }}</td>
+          <td class="amount-cell">{{ formatCurrency(txn.amount) }}</td>
+          <td>{{ formatCurrency(txn.charges) }}</td>
+          <td><span class="status-badge" [ngClass]="getStatusClass(txn.status)">{{ txn.status }}</span></td>
+          <td>{{ formatDateTime(txn.createdAt) }}</td>
+          <td><button class="btn-link" (click)="$event.stopPropagation(); viewTransactionDetails(txn.eftReference)">View</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <div *ngIf="filteredTransactions().length === 0" class="empty-state">
+      <p>No transactions found</p>
+    </div>
+  </div>
+</div>
+

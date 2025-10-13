@@ -1,0 +1,266 @@
+<div class="rtgs-history-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">RTGS Transaction History</h1>
+      <p class="page-subtitle">⚡ Real-time transfer history</p>
+    </div>
+    <button class="btn btn-primary" (click)="navigateToNewTransfer()">
+      <span class="icon">+</span> New RTGS Transfer
+    </button>
+  </div>
+
+  <!-- Stats Summary -->
+  <div *ngIf="transactions().length > 0" class="stats-summary">
+    <div class="stat-card">
+      <div class="stat-label">Total Transactions</div>
+      <div class="stat-value">{{ getTransactionStats().total }}</div>
+    </div>
+    <div class="stat-card success">
+      <div class="stat-label">Completed</div>
+      <div class="stat-value">{{ getTransactionStats().completed }}</div>
+    </div>
+    <div class="stat-card danger">
+      <div class="stat-label">Failed</div>
+      <div class="stat-value">{{ getTransactionStats().failed }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Amount</div>
+      <div class="stat-value amount">{{ formatCurrency(getTransactionStats().totalAmount) }}</div>
+    </div>
+  </div>
+
+  <!-- Filter Panel -->
+  <div class="filter-panel">
+    <div class="filter-group">
+      <label>Account:</label>
+      <select
+        [value]="selectedAccountNumber()"
+        (change)="onAccountChange($event)"
+        class="filter-select"
+      >
+        <option value="">Select Account</option>
+        <option *ngFor="let account of accounts()" [value]="account.accountNumber">
+          {{ account.accountNumber }} - {{ account.accountType }}
+        </option>
+      </select>
+    </div>
+    <div class="search-box">
+      <input
+        type="text"
+        placeholder="Search by beneficiary, reference, or amount"
+        [value]="searchTerm()"
+        (input)="onSearchChange($event)"
+        class="search-input"
+      />
+    </div>
+    <div class="filter-group">
+      <select
+        [value]="dateFilter()"
+        (change)="onDateFilterChange($event)"
+        class="filter-select"
+      >
+        <option value="ALL">All Time</option>
+        <option value="TODAY">Today</option>
+        <option value="LAST_7">Last 7 Days</option>
+        <option value="LAST_30">Last 30 Days</option>
+      </select>
+      <select
+        [value]="statusFilter()"
+        (change)="onStatusFilterChange($event)"
+        class="filter-select"
+      >
+        <option value="ALL">All Status</option>
+        <option value="PROCESSING">Processing</option>
+        <option value="COMPLETED">Completed</option>
+        <option value="FAILED">Failed</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading RTGS transaction history...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error()" class="error-state">
+    <p class="error-message">{{ error() }}</p>
+    <button class="btn btn-secondary" (click)="loadTransactionHistory()">Retry</button>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading() && !error() && filteredTransactions().length === 0" class="empty-state">
+    <div class="empty-illustration">⚡</div>
+    <h3>No RTGS transactions found</h3>
+    <p>Your RTGS transfer history will appear here</p>
+    <button class="btn btn-primary btn-large" (click)="navigateToNewTransfer()">
+      Make Your First RTGS Transfer
+    </button>
+  </div>
+
+  <!-- Transaction List -->
+  <div *ngIf="!loading() && !error() && filteredTransactions().length > 0" class="transactions-list">
+    <div
+      *ngFor="let transaction of filteredTransactions()"
+      class="transaction-card"
+      [class.highlighted]="isHighlighted(transaction)"
+      (click)="openDetailsModal(transaction)"
+    >
+      <!-- Card Header -->
+      <div class="card-header">
+        <div class="date-time">
+          <div class="date">{{ formatDate(transaction.initiatedAt) }}</div>
+          <div class="time">{{ formatTime(transaction.initiatedAt) }}</div>
+        </div>
+        <span
+          class="status-badge"
+          [ngClass]="getStatusClass(transaction.status)"
+        >
+          {{ getStatusIcon(transaction.status) }} {{ getStatusLabel(transaction.status) }}
+        </span>
+      </div>
+
+      <!-- Card Body -->
+      <div class="card-body">
+        <div class="beneficiary-info">
+          <div class="beneficiary-name">{{ transaction.beneficiaryName }}</div>
+          <div class="bank-name">{{ transaction.beneficiaryBank }}</div>
+        </div>
+        <div class="amount">{{ formatCurrency(transaction.amount) }}</div>
+      </div>
+
+      <!-- Card Footer -->
+      <div class="card-footer">
+        <div class="reference">
+          <span class="label">Ref:</span>
+          <span class="value">{{ transaction.eftReference }}</span>
+        </div>
+        <div class="charges">
+          <span class="label">Charges:</span>
+          <span class="value">{{ formatCurrency(transaction.charges) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Details Modal -->
+  <div *ngIf="showDetailsModal()" class="modal-overlay" (click)="closeDetailsModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <div>
+          <h2>Transaction Details</h2>
+          <div class="reference-number">
+            <span>{{ selectedTransaction()!.eftReference }}</span>
+            <button class="copy-btn" (click)="copyToClipboard(selectedTransaction()!.eftReference)">📋</button>
+          </div>
+        </div>
+        <button class="close-btn" (click)="closeDetailsModal()">×</button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <!-- Status -->
+        <div class="details-section status-section">
+          <span
+            class="status-badge large"
+            [ngClass]="getStatusClass(selectedTransaction()!.status)"
+          >
+            {{ getStatusIcon(selectedTransaction()!.status) }} {{ getStatusLabel(selectedTransaction()!.status) }}
+          </span>
+          <div *ngIf="selectedTransaction()!.status === 'COMPLETED'" class="completion-time">
+            ⚡ Completed in real-time at {{ formatDateTime(selectedTransaction()!.actualCompletion) }}
+          </div>
+          <div *ngIf="selectedTransaction()!.status === 'FAILED'" class="failure-reason">
+            <strong>Failure Reason:</strong> {{ selectedTransaction()!.failureReason || 'Transaction failed' }}
+          </div>
+        </div>
+
+        <!-- Transfer Amount -->
+        <div class="details-section">
+          <h3>Transfer Amount</h3>
+          <div class="amount-breakdown">
+            <div class="breakdown-row">
+              <span>Transfer Amount:</span>
+              <span class="amount-highlight">{{ formatCurrency(selectedTransaction()!.amount) }}</span>
+            </div>
+            <div class="breakdown-row">
+              <span>RTGS Charges:</span>
+              <span>{{ formatCurrency(selectedTransaction()!.charges) }}</span>
+            </div>
+            <div class="breakdown-row total">
+              <span><strong>Total Debited:</strong></span>
+              <span><strong>{{ formatCurrency(selectedTransaction()!.totalAmount) }}</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- From Account -->
+        <div class="details-section">
+          <h3>From Account</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="label">Account Number:</span>
+              <span class="value">{{ selectedTransaction()!.fromAccountNumber }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- To Beneficiary -->
+        <div class="details-section">
+          <h3>To Beneficiary</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="label">Beneficiary Name:</span>
+              <span class="value">{{ selectedTransaction()!.beneficiaryName }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Account Number:</span>
+              <span class="value">{{ selectedTransaction()!.beneficiaryAccountNumber }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Bank:</span>
+              <span class="value">{{ selectedTransaction()!.beneficiaryBank }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transaction Details -->
+        <div class="details-section">
+          <h3>Transaction Details</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="label">Purpose:</span>
+              <span class="value">{{ selectedTransaction()!.purpose }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Initiated At:</span>
+              <span class="value">{{ formatDateTime(selectedTransaction()!.initiatedAt) }}</span>
+            </div>
+            <div *ngIf="selectedTransaction()!.actualCompletion" class="detail-item">
+              <span class="label">Completed At:</span>
+              <span class="value">{{ formatDateTime(selectedTransaction()!.actualCompletion) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Currency:</span>
+              <span class="value">{{ selectedTransaction()!.currency }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="modal-actions">
+          <button class="btn btn-outline-primary" (click)="downloadReceipt(selectedTransaction()!.eftReference)">
+            📄 Download Receipt
+          </button>
+          <button class="btn btn-secondary" (click)="closeDetailsModal()">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

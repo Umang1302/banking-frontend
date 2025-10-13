@@ -57,8 +57,8 @@
     {
       "id": "neft",
       "label": "NEFT Transfers",
-      "routerLink": "/dashboard/neft",
-      "icon": "💸",
+      "routerLink": "/dashboard/neft/transfer",
+      "icon": "💳",
       "roles": ["customer"],
       "order": 6,
       "children": [
@@ -86,6 +86,30 @@
       ]
     },
     {
+      "id": "rtgs",
+      "label": "RTGS Transfers",
+      "routerLink": "/dashboard/rtgs/transfer",
+      "icon": "⚡",
+      "roles": ["customer"],
+      "order": 7,
+      "children": [
+        {
+          "id": "rtgs-transfer",
+          "label": "New RTGS Transfer",
+          "routerLink": "/dashboard/rtgs/transfer",
+          "icon": "⚡",
+          "roles": ["customer"]
+        },
+        {
+          "id": "rtgs-history",
+          "label": "Transfer History",
+          "routerLink": "/dashboard/rtgs/history",
+          "icon": "📜",
+          "roles": ["customer"]
+        }
+      ]
+    },
+    {
       "id": "admin-dashboard",
       "label": "Admin Dashboard",
       "routerLink": "/dashboard/admin",
@@ -96,7 +120,7 @@
     {
       "id": "admin-neft",
       "label": "NEFT Management",
-      "routerLink": "/dashboard/admin-neft",
+      "routerLink": "/dashboard/admin-neft/dashboard",
       "icon": "💳",
       "roles": ["admin", "superadmin"],
       "order": 10,
@@ -119,6 +143,30 @@
           "id": "admin-neft-transactions",
           "label": "All Transactions",
           "routerLink": "/dashboard/admin-neft/transactions",
+          "icon": "📋",
+          "roles": ["admin", "superadmin"]
+        }
+      ]
+    },
+    {
+      "id": "admin-rtgs",
+      "label": "RTGS Management",
+      "routerLink": "/dashboard/admin-rtgs/dashboard",
+      "icon": "⚡",
+      "roles": ["admin", "superadmin"],
+      "order": 11,
+      "children": [
+        {
+          "id": "admin-rtgs-dashboard",
+          "label": "RTGS Dashboard",
+          "routerLink": "/dashboard/admin-rtgs/dashboard",
+          "icon": "📊",
+          "roles": ["admin", "superadmin"]
+        },
+        {
+          "id": "admin-rtgs-transactions",
+          "label": "All Transactions",
+          "routerLink": "/dashboard/admin-rtgs/transactions",
           "icon": "📋",
           "roles": ["admin", "superadmin"]
         }

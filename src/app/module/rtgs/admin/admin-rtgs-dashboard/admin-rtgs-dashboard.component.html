@@ -1,0 +1,221 @@
+<div class="admin-rtgs-dashboard">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">⚡ RTGS Dashboard</h1>
+      <p class="page-subtitle">Real-time monitoring of RTGS transactions</p>
+    </div>
+    <button class="btn btn-refresh" (click)="refreshDashboard()">
+      <span class="icon">🔄</span> Refresh
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading dashboard data...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error()" class="error-state">
+    <p class="error-message">{{ error() }}</p>
+    <button class="btn btn-secondary" (click)="loadDashboardData()">Retry</button>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!loading() && !error() && getStatsCards()" class="dashboard-content">
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card primary">
+        <div class="stat-icon">📊</div>
+        <div class="stat-content">
+          <div class="stat-label">Total Transactions</div>
+          <div class="stat-value">{{ getStatsCards()!.total }}</div>
+        </div>
+      </div>
+
+      <div class="stat-card success">
+        <div class="stat-icon">✅</div>
+        <div class="stat-content">
+          <div class="stat-label">Completed</div>
+          <div class="stat-value">{{ getStatsCards()!.completed }}</div>
+          <div class="stat-meta">{{ getStatsCards()!.successRate }} Success Rate</div>
+        </div>
+      </div>
+
+      <div class="stat-card info">
+        <div class="stat-icon">⚡</div>
+        <div class="stat-content">
+          <div class="stat-label">Processing</div>
+          <div class="stat-value">{{ getStatsCards()!.processing }}</div>
+        </div>
+      </div>
+
+      <div class="stat-card danger">
+        <div class="stat-icon">❌</div>
+        <div class="stat-content">
+          <div class="stat-label">Failed</div>
+          <div class="stat-value">{{ getStatsCards()!.failed }}</div>
+          <div class="stat-meta">{{ getStatsCards()!.failureRate }} Failure Rate</div>
+        </div>
+      </div>
+
+      <div class="stat-card highlight">
+        <div class="stat-icon">💰</div>
+        <div class="stat-content">
+          <div class="stat-label">Total Amount</div>
+          <div class="stat-value amount">{{ formatCurrency(getStatsCards()!.totalAmount) }}</div>
+        </div>
+      </div>
+
+      <div class="stat-card highlight">
+        <div class="stat-icon">💵</div>
+        <div class="stat-content">
+          <div class="stat-label">Total Revenue</div>
+          <div class="stat-value amount">{{ formatCurrency(getStatsCards()!.revenue) }}</div>
+          <div class="stat-meta">Charges: {{ formatCurrency(getStatsCards()!.totalCharges) }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-grid">
+      <!-- Status Distribution -->
+      <div class="widget">
+        <div class="widget-header">
+          <h3>Transaction Status Distribution</h3>
+        </div>
+        <div class="widget-body">
+          <div class="chart-bars">
+            <div *ngFor="let item of getChartData()!.statusDistribution" class="bar-item">
+              <div class="bar-label">{{ item.label }}</div>
+              <div class="bar-container">
+                <div 
+                  class="bar-fill" 
+                  [style.width.%]="(item.value / getStatsCards()!.total) * 100"
+                  [style.background]="item.color">
+                </div>
+              </div>
+              <div class="bar-value">{{ item.value }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Success Rate -->
+      <div class="widget">
+        <div class="widget-header">
+          <h3>Performance Metrics</h3>
+        </div>
+        <div class="widget-body">
+          <div class="performance-metrics">
+            <div class="metric-item">
+              <div class="metric-label">Success Rate</div>
+              <div class="metric-value success">{{ getChartData()!.successRate }}%</div>
+              <div class="metric-bar">
+                <div class="metric-fill success" [style.width.%]="getChartData()!.successRate"></div>
+              </div>
+            </div>
+            <div class="metric-item">
+              <div class="metric-label">Failure Rate</div>
+              <div class="metric-value danger">{{ getChartData()!.failureRate }}%</div>
+              <div class="metric-bar">
+                <div class="metric-fill danger" [style.width.%]="getChartData()!.failureRate"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="widget">
+      <div class="widget-header">
+        <h3>Recent Completed Transactions</h3>
+        <button class="btn-link" (click)="navigateTo('/dashboard/admin-rtgs/transactions')">
+          View All →
+        </button>
+      </div>
+      <div class="widget-body">
+        <div *ngIf="recentTransactions().length === 0" class="empty-message">
+          No recent transactions
+        </div>
+        <div *ngIf="recentTransactions().length > 0" class="transaction-list">
+          <div *ngFor="let txn of recentTransactions()" class="transaction-item">
+            <div class="txn-info">
+              <div class="txn-ref">{{ txn.eftReference }}</div>
+              <div class="txn-details">
+                <span>{{ txn.sourceAccount?.customer?.firstName }} {{ txn.sourceAccount?.customer?.lastName }}</span>
+                <span class="separator">→</span>
+                <span>{{ txn.beneficiaryName }}</span>
+              </div>
+              <div class="txn-meta">
+                <span class="txn-time">{{ formatDateTime(txn.createdAt) }}</span>
+              </div>
+            </div>
+            <div class="txn-amount">
+              <div class="amount">{{ formatCurrency(txn.amount) }}</div>
+              <span class="status-badge" [ngClass]="getStatusClass(txn.status)">
+                {{ getStatusIcon(txn.status) }} {{ txn.status }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Failed Transactions -->
+    <div *ngIf="failedTransactions().length > 0" class="widget alert-widget">
+      <div class="widget-header">
+        <h3>⚠️ Failed Transactions</h3>
+        <button class="btn-link" (click)="navigateTo('/dashboard/admin-rtgs/transactions?status=FAILED')">
+          View All →
+        </button>
+      </div>
+      <div class="widget-body">
+        <div class="transaction-list">
+          <div *ngFor="let txn of failedTransactions().slice(0, 5)" class="transaction-item">
+            <div class="txn-info">
+              <div class="txn-ref">{{ txn.eftReference }}</div>
+              <div class="txn-details">
+                <span>{{ txn.sourceAccount?.customer?.firstName }} {{ txn.sourceAccount?.customer?.lastName }}</span>
+                <span class="separator">→</span>
+                <span>{{ txn.beneficiaryName }}</span>
+              </div>
+              <div class="txn-meta">
+                <span class="txn-time">{{ formatDateTime(txn.createdAt) }}</span>
+              </div>
+            </div>
+            <div class="txn-amount">
+              <div class="amount">{{ formatCurrency(txn.amount) }}</div>
+              <span class="status-badge status-danger">
+                {{ getStatusIcon(txn.status) }} {{ txn.status }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <button class="action-btn" (click)="navigateTo('/dashboard/admin-rtgs/transactions')">
+        <span class="action-icon">📋</span>
+        <span class="action-label">All Transactions</span>
+      </button>
+      <button class="action-btn" (click)="navigateTo('/dashboard/admin-rtgs/transactions?status=COMPLETED')">
+        <span class="action-icon">✅</span>
+        <span class="action-label">Completed</span>
+      </button>
+      <button class="action-btn" (click)="navigateTo('/dashboard/admin-rtgs/transactions?status=FAILED')">
+        <span class="action-icon">❌</span>
+        <span class="action-label">Failed</span>
+      </button>
+      <button class="action-btn" (click)="navigateTo('/dashboard/admin/eft/overview')">
+        <span class="action-icon">📊</span>
+        <span class="action-label">EFT Overview</span>
+      </button>
+    </div>
+  </div>
+</div>
+

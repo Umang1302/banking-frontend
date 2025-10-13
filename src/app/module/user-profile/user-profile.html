@@ -6,11 +6,12 @@
       Back to Dashboard
     </button>
     <h1 class="profile-title">My Profile</h1>
-    <div class="header-actions">
+    <!-- <div class="header-actions">
       <button 
         class="edit-btn" 
         (click)="toggleEdit()" 
-        *ngIf="shouldShowEditButton()"
+        // show edit btn when user is not is a
+        *ngIf="shouldShowEditButton() && "
         [disabled]="isLoading$ | async">
         <span class="edit-icon">✏️</span>
         Edit Profile
@@ -21,7 +22,7 @@
         *ngIf="shouldShowCancelButton()">
         Cancel
       </button>
-    </div>
+    </div> -->
   </div>
 
   <!-- Loading State -->

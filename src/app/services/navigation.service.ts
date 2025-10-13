@@ -30,8 +30,11 @@ export class NavigationService {
   };
 
   loadNavigationConfig(): Observable<NavigationConfig> {
-    return this.http.get<NavigationConfig>('config/navigation.json').pipe(
+    // Add cache-busting parameter to force reload
+    const cacheBuster = new Date().getTime();
+    return this.http.get<NavigationConfig>(`config/navigation.json?v=${cacheBuster}`).pipe(
       map(config => {
+        console.log('Navigation config loaded:', config);
         this.navigationConfig = config;
         this.configLoaded.next(true);
         return config;
@@ -124,12 +127,17 @@ export class NavigationService {
 
   // Check if a user role has access to a specific route path
   canAccessRoute(routePath: string, userRole: string | null): Observable<boolean> {
-    if (!userRole) return of(false);
+    console.log('canAccessRoute called:', routePath, 'userRole:', userRole);
+    if (!userRole) {
+      console.log('No user role provided, denying access');
+      return of(false);
+    }
     
     return this.ensureConfigLoaded().pipe(
       map(() => {
         // Normalize the route path (remove leading slash and query params)
         const normalizedPath = routePath.replace(/^\//, '').split('?')[0];
+        console.log('Normalized path:', normalizedPath);
         
         // First, check all children routes (more specific routes have priority)
         for (const item of this.navigationConfig.items) {
@@ -139,11 +147,30 @@ export class NavigationService {
               
               // Check for exact match or path starting with child path
               if (normalizedPath === childPath || normalizedPath.startsWith(childPath + '/')) {
+                console.log('Child route matched:', child.routerLink, 'roles:', child.roles);
                 // If roles array is empty, allow all roles
                 if (child.roles.length === 0) return true;
                 // Check if user role is in the allowed roles
-                return child.roles.includes(userRole);
+                const hasAccess = child.roles.includes(userRole);
+                console.log('Access granted?', hasAccess);
+                return hasAccess;
               }
+            }
+            
+            // Check if the normalized path could be a parent route that has children
+            // For example, /dashboard/rtgs should be allowed if /dashboard/rtgs/transfer is allowed
+            const parentPath = item.routerLink.replace(/^\//, '');
+            // Extract the base path from parent routerLink (e.g., dashboard/rtgs from dashboard/rtgs/transfer)
+            const parentBasePath = parentPath.split('/').slice(0, -1).join('/');
+            
+            // If normalized path matches the base path of a parent with children, check parent's roles
+            if (parentBasePath && normalizedPath === parentBasePath) {
+              console.log('Parent base path matched:', parentBasePath, 'item roles:', item.roles);
+              // If parent has roles defined, check them
+              if (item.roles.length === 0) return true;
+              const hasAccess = item.roles.includes(userRole);
+              console.log('Access granted?', hasAccess);
+              return hasAccess;
             }
           }
         }
@@ -154,14 +181,18 @@ export class NavigationService {
           
           // Check if the route matches this item
           if (normalizedPath === itemPath || normalizedPath.startsWith(itemPath + '/')) {
+            console.log('Parent route matched:', item.routerLink, 'roles:', item.roles);
             // If roles array is empty, allow all roles
             if (item.roles.length === 0) return true;
             // Check if user role is in the allowed roles
-            return item.roles.includes(userRole);
+            const hasAccess = item.roles.includes(userRole);
+            console.log('Access granted?', hasAccess);
+            return hasAccess;
           }
         }
         
         // If no matching route found in navigation config, deny access
+        console.log('No matching route found in navigation config, denying access');
         return false;
       })
     );
