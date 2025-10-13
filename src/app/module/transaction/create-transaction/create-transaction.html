@@ -45,8 +45,8 @@
             [(ngModel)]="formData.toAccountNumber"
             name="toAccountNumber"
             class="form-input"
-            [class.input-error]="error && !recipientDetails"
-            [class.input-success]="recipientDetails"
+            [class.input-error]="accountError"
+            [class.input-success]="isRecipientValid && !accountError"
             placeholder="1234567890"
             (blur)="onRecipientAccountBlur()"
             required
@@ -57,16 +57,15 @@
         </div>
         <div class="input-helper">
           <span *ngIf="validating" class="helper-text">Validating account...</span>
-          <span *ngIf="recipientDetails" class="helper-success">
-            ✓ {{ recipientDetails.accountHolderName }} ({{ recipientDetails.accountType }})
+          <span *ngIf="accountError && !validating" class="helper-error">
+            {{ accountError }}
           </span>
-          <span *ngIf="!validating && !recipientDetails" class="helper-text">
+          <span *ngIf="isRecipientValid && !validating && !accountError" class="helper-success">
+            ✓ Valid account number
+          </span>
+          <span *ngIf="!validating && !isRecipientValid && !accountError" class="helper-text">
             Enter recipient account number
           </span>
-        </div>
-        <div *ngIf="recipientDetails" class="recipient-chip">
-          <span class="chip-icon">✓</span>
-          <span>Sending to: {{ recipientDetails.accountHolderName }}</span>
         </div>
       </div>
 
@@ -82,14 +81,23 @@
             [(ngModel)]="formData.amount"
             name="amount"
             class="form-input amount-input"
+            [class.input-error]="amountError"
+            [class.input-success]="isAmountValid() && !amountError"
             placeholder="0.00"
             step="0.01"
             min="0.01"
+            (blur)="onAmountBlur()"
             required
           />
         </div>
-        <div class="input-helper" *ngIf="selectedAccount">
-          <span class="helper-text">
+        <div class="input-helper">
+          <span *ngIf="amountError" class="helper-error">
+            {{ amountError }}
+          </span>
+          <span *ngIf="isAmountValid() && !amountError" class="helper-success">
+            ✓ Valid amount
+          </span>
+          <span *ngIf="selectedAccount && !amountError" class="helper-text">
             Available: {{ selectedAccount.currency }} {{ formatAmountFromString(selectedAccount.availableBalance) }}
           </span>
         </div>
@@ -139,7 +147,7 @@
         <button 
           type="submit" 
           class="btn btn-primary"
-          [disabled]="loading || !recipientDetails || validating || !transferForm.valid"
+          [disabled]="loading || !isRecipientValid || validating || !transferForm.valid"
         >
           <span *ngIf="!loading">Continue to Review</span>
           <span *ngIf="loading" class="btn-loading">
@@ -184,9 +192,8 @@
       <!-- To Account -->
       <div class="transfer-card to-card">
         <div class="card-label">TO</div>
-        <div class="card-title">{{ recipientDetails?.accountHolderName }}</div>
-        <div class="card-subtitle">{{ recipientDetails?.accountNumber }}</div>
-        <div class="card-balance">{{ recipientDetails?.accountType }} Account</div>
+        <div class="card-title">Recipient Account</div>
+        <div class="card-subtitle">{{ formData.toAccountNumber }}</div>
       </div>
 
       <!-- Transfer Amount -->

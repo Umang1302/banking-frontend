@@ -27,51 +27,68 @@ export class DashboardHomeComponent implements OnInit {
   
   user$ = this.userService.user$;
   userFullName$ = this.userService.userFullName$;
+  customerId$ = this.userService.customerId$;
+  copySuccess = false;
   
   // Banking Quick Links
   quickLinks: QuickLink[] = [
     {
-      id: 'transfer-money',
-      title: 'Transfer Money',
-      description: 'Send money between accounts or to others',
+      id: 'neft-transfer',
+      title: 'NEFT Transfer',
+      description: 'Send money to any bank account',
       icon: '💸',
-      action: 'transfer'
+      route: '/dashboard/neft/transfer'
     },
     {
-      id: 'pay-bills',
-      title: 'Pay Bills',
-      description: 'Pay your bills and manage payees',
-      icon: '🧾',
-      action: 'pay-bills'
+      id: 'new-transaction',
+      title: 'New Transaction',
+      description: 'Create a new banking transaction',
+      icon: '💳',
+      route: '/dashboard/transactions/create'
+    },
+    {
+      id: 'beneficiaries',
+      title: 'My Beneficiaries',
+      description: 'Manage your saved beneficiaries',
+      icon: '👥',
+      route: '/dashboard/neft/beneficiaries'
     },
     {
       id: 'view-statements',
       title: 'View Statements',
       description: 'Download your account statements',
       icon: '📄',
-      action: 'statements'
+      route: '/dashboard/transactions/statements'
+    },
+    {
+      id: 'transaction-history',
+      title: 'Transaction History',
+      description: 'View all your transactions',
+      icon: '📊',
+      route: '/dashboard/transactions/history'
+    },
+    {
+      id: 'upi-payments',
+      title: 'UPI Payments',
+      description: 'Quick UPI payments (Coming Soon)',
+      icon: '📱',
+      action: 'upi-coming-soon'
     },
     {
       id: 'apply-loan',
       title: 'Apply for Loan',
-      description: 'Explore personal and home loans',
+      description: 'Explore loan options (Coming Soon)',
       icon: '🏦',
-      action: 'apply-loan'
-    },
-    {
-      id: 'cards',
-      title: 'Manage Cards',
-      description: 'View and manage your debit/credit cards',
-      icon: '💳',
-      action: 'cards'
-    },
-    {
-      id: 'support',
-      title: 'Customer Support',
-      description: 'Get help with your banking needs',
-      icon: '💬',
-      action: 'support'
+      action: 'loan-coming-soon'
     }
+    // ,
+    // {
+    //   id: 'bulk-upload',
+    //   title: 'Bulk Upload',
+    //   description: 'Upload multiple transactions',
+    //   icon: '📤',
+    //   route: '/dashboard/transactions/bulk-upload'
+    // }
   ];
 
   ngOnInit(): void {
@@ -132,24 +149,14 @@ export class DashboardHomeComponent implements OnInit {
     } else if (link.action) {
       // Handle specific actions
       switch (link.action) {
-        case 'transfer':
-          this.router.navigate(['/dashboard/transactions/create']);
+        case 'upi-coming-soon':
+          alert('🚀 UPI Payments feature coming soon! Stay tuned for quick and easy payments.');
           break;
-        case 'pay-bills':
-          console.log('Navigate to bill payment');
+        case 'loan-coming-soon':
+          alert('🏦 Loan application feature coming soon! We\'ll notify you when it\'s available.');
           break;
-        case 'statements':
-          this.router.navigate(['/dashboard/transactions/statements']);
-          break;
-        case 'apply-loan':
-          console.log('Navigate to loan application');
-          break;
-        case 'cards':
-          console.log('Navigate to cards management');
-          break;
-        case 'support':
-          console.log('Open support chat');
-          break;
+        default:
+          console.log('Action not implemented:', link.action);
       }
     }
   }
@@ -202,6 +209,21 @@ export class DashboardHomeComponent implements OnInit {
 
   viewAllTransactions(): void {
     this.router.navigate(['/dashboard/transactions/history']);
+  }
+
+  copyCustomerId(): void {
+    this.customerId$.subscribe(customerId => {
+      if (customerId) {
+        navigator.clipboard.writeText(String(customerId)).then(() => {
+          this.copySuccess = true;
+          setTimeout(() => {
+            this.copySuccess = false;
+          }, 2000); // Reset after 2 seconds
+        }).catch(err => {
+          console.error('Failed to copy customer ID:', err);
+        });
+      }
+    }).unsubscribe();
   }
 }
 

@@ -1,0 +1,105 @@
+<div class="transaction-list-container">
+  <div class="page-header">
+    <div class="header-left">
+      <button class="btn-back" (click)="backToDashboard()">
+        ← Back to Dashboard
+      </button>
+      <div>
+        <h1 class="page-title">NEFT/EFT Transactions</h1>
+        <p class="page-subtitle">Monitor and manage all electronic fund transfers</p>
+      </div>
+    </div>
+    <button class="btn btn-primary" (click)="loadTransactions()">
+      🔄 Refresh
+    </button>
+  </div>
+
+  <!-- Statistics Bar -->
+  <div *ngIf="stats()" class="stats-bar">
+    <div class="stat-item">
+      <span class="stat-label">Total:</span>
+      <span class="stat-value">{{ stats()!.totalTransactions }}</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">Amount:</span>
+      <span class="stat-value">{{ formatCurrency(stats()!.totalAmount) }}</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">Success Rate:</span>
+      <span class="stat-value">{{ stats()!.successRate }}%</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">Pending:</span>
+      <span class="stat-value">{{ stats()!.pendingCount }}</span>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filter-bar">
+    <input
+      type="text"
+      placeholder="Search by reference, customer, or beneficiary"
+      [value]="searchTerm()"
+      (input)="onSearchChange($event)"
+      class="search-input"
+    />
+    <select [value]="statusFilter()" (change)="onStatusFilterChange($event)" class="filter-select">
+      <option value="ALL">All Status</option>
+      <option value="PENDING">Pending</option>
+      <option value="PROCESSING">Processing</option>
+      <option value="COMPLETED">Completed</option>
+      <option value="FAILED">Failed</option>
+    </select>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading()" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading transactions...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error()" class="error-state">
+    <p class="error-message">{{ error() }}</p>
+    <button class="btn btn-secondary" (click)="loadTransactions()">Retry</button>
+  </div>
+
+  <!-- Transactions Table -->
+  <div *ngIf="!loading() && !error()" class="transactions-table">
+    <table>
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Reference</th>
+          <th>Date & Time</th>
+          <th>Customer</th>
+          <th>Beneficiary</th>
+          <th>Amount</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let transaction of filteredTransactions()" (click)="openDetailsModal(transaction)">
+          <td>
+            <span class="status-badge" [ngClass]="getStatusClass(transaction.status)">
+              {{ transaction.status }}
+            </span>
+          </td>
+          <td class="ref-number">{{ transaction.eftReference }}</td>
+          <td>
+            <div>{{ formatDate(transaction.createdAt) }}</div>
+            <div class="time-text">{{ formatTime(transaction.createdAt) }}</div>
+          </td>
+          <td>{{ transaction.initiatedBy }}</td>
+          <td>{{ transaction.beneficiaryName }}</td>
+          <td class="amount-cell">{{ formatCurrency(transaction.amount) }}</td>
+          <td class="actions-cell" (click)="$event.stopPropagation()">
+            <button class="btn btn-sm btn-secondary" (click)="openDetailsModal(transaction)">View</button>
+            <!-- Retry button will be enabled in Phase 2 when retry API is implemented -->
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+

@@ -21,7 +21,6 @@ export interface ProfileUpdateRequest {
   annualIncome?: number;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
-  reason?: string;
 }
 
 @Component({
@@ -46,6 +45,8 @@ export class UserProfileComponent implements OnInit {
   isSubmitting = false;
   submitSuccess = false;
   isFirstLogin = false;
+  isRejected = false;
+  rejectionReason = '';
   
   // Status-based properties
   UserStatus = UserStatus; // Make enum available in template
@@ -78,9 +79,6 @@ export class UserProfileComponent implements OnInit {
       // Emergency Contact
       emergencyContactName: [''],
       emergencyContactPhone: [''],
-      
-      // Reason for update (only required when editing active profile)
-      reason: ['']
     });
   }
 
@@ -95,7 +93,6 @@ export class UserProfileComponent implements OnInit {
     // Subscribe to user data and populate form
     this.user$.subscribe(user => {
       if (user) {
-        console.log("MADE CHANGES");
         // Map API status to our enum values
         this.currentUserStatus = this.mapApiStatusToEnum(user.status) || UserStatus.PENDING_DETAILS;
         this.currentUserRole = this.mapApiRoleToEnum(user) || UserRole.USER;
@@ -196,7 +193,6 @@ export class UserProfileComponent implements OnInit {
       this.profileForm.get('dateOfBirth')?.setValidators([Validators.required]);
       this.profileForm.get('occupation')?.setValidators([Validators.required]);
       this.profileForm.get('nationalId')?.setValidators([Validators.required]);
-      this.profileForm.get('reason')?.setValidators([]); // Not required for profile completion
     } else {
       // For profile updates, make fewer fields required
       this.profileForm.get('address')?.setValidators([]);
@@ -204,7 +200,6 @@ export class UserProfileComponent implements OnInit {
       this.profileForm.get('state')?.setValidators([]);
       this.profileForm.get('dateOfBirth')?.setValidators([]);
       this.profileForm.get('occupation')?.setValidators([]);
-      this.profileForm.get('reason')?.setValidators([Validators.minLength(10)]); // Required for updates
     }
     
     // Update form control validators
@@ -222,6 +217,7 @@ export class UserProfileComponent implements OnInit {
       try {
         additionalInfo = JSON.parse((user as any).customer.otherInfo);
         console.log('Parsed otherInfo:', additionalInfo);
+
       } catch (error) {
         console.warn('Failed to parse customer otherInfo:', error);
       }
@@ -252,11 +248,13 @@ export class UserProfileComponent implements OnInit {
       // Emergency Contact - from otherInfo
       emergencyContactName: additionalInfo.emergencyContactName || user.emergencyContactName || '',
       emergencyContactPhone: additionalInfo.emergencyContactPhone || user.emergencyContactPhone || '',
-      
-      // Reason - from otherInfo (for updates)
-      reason: additionalInfo.reason || ''
     });
 
+    if(additionalInfo.rejected?.reason){
+      this.isRejected = true;
+      this.rejectionReason = additionalInfo.rejected.reason;
+    }
+    
     console.log('Form populated with values:', this.profileForm.value);
   }
 
@@ -364,7 +362,6 @@ export class UserProfileComponent implements OnInit {
       annualIncome: 'Annual Income',
       emergencyContactName: 'Emergency Contact Name',
       emergencyContactPhone: 'Emergency Contact Phone',
-      reason: 'Reason for Update'
     };
     return labels[fieldName] || fieldName;
   }
@@ -390,10 +387,6 @@ export class UserProfileComponent implements OnInit {
 
   isActive(): boolean {
     return this.currentUserStatus === UserStatus.ACTIVE;
-  }
-
-  isRejected(): boolean {
-    return this.currentUserStatus === UserStatus.REJECTED;
   }
 
   canEdit(): boolean {

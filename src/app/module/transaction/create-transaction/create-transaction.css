@@ -69,8 +69,8 @@
 .form-input:focus,
 .form-textarea:focus {
   outline: none;
-  border-color: #3498db;
-  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+  border-color: #B02A30;
+  box-shadow: 0 0 0 3px rgba(176, 42, 48, 0.1);
 }
 
 .form-select {
@@ -152,6 +152,11 @@
 
 .helper-success {
   color: #27ae60;
+  font-weight: 500;
+}
+
+.helper-error {
+  color: #e74c3c;
   font-weight: 500;
 }
 
@@ -254,14 +259,14 @@
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #B02A30 0%, #F99D27 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(176, 42, 48, 0.3);
 }
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 16px rgba(176, 42, 48, 0.4);
 }
 
 .btn-secondary {
@@ -307,8 +312,8 @@
 }
 
 .input-spinner .spinner {
-  border-color: rgba(52, 152, 219, 0.3);
-  border-top-color: #3498db;
+  border-color: rgba(176, 42, 48, 0.3);
+  border-top-color: #B02A30;
 }
 
 @keyframes spin {
@@ -331,7 +336,7 @@
 .confirmation-title {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #667eea;
+  color: #B02A30;
   margin: 0 0 0.5rem 0;
 }
 
@@ -397,17 +402,17 @@
 
 .arrow-icon {
   font-size: 2.5rem;
-  color: #667eea;
+  color: #B02A30;
 }
 
 /* Amount Card */
 .amount-card {
   padding: 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #B02A30 0%, #F99D27 100%);
   border-radius: 12px;
   text-align: center;
   color: white;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(176, 42, 48, 0.3);
 }
 
 .amount-label {
@@ -587,7 +592,7 @@
 .amount-highlight {
   font-size: 1.5rem !important;
   font-weight: 700 !important;
-  color: #667eea !important;
+  color: #B02A30 !important;
 }
 
 .balance-after {

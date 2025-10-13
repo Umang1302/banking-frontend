@@ -46,8 +46,12 @@ export class CreateTransactionComponent implements OnInit {
   selectedAccount: Account | null = null;
 
   // Recipient validation
-  recipientDetails: RecipientValidationResponse | null = null;
+  isRecipientValid = false;
   validating = false;
+  accountError: string | null = null;
+
+  // Amount validation
+  amountError: string | null = null;
 
   // Loading and messages
   loading = false;
@@ -79,34 +83,76 @@ export class CreateTransactionComponent implements OnInit {
     const accountNumber = this.formData.toAccountNumber.trim();
     
     if (!accountNumber) {
-      this.recipientDetails = null;
+      this.isRecipientValid = false;
+      this.accountError = null;
       return;
     }
 
     // Check if user is trying to send to their own account
     if (accountNumber === this.formData.fromAccountNumber) {
-      this.error = 'Cannot transfer to the same account';
-      this.recipientDetails = null;
+      this.accountError = 'Cannot transfer to the same account';
+      this.isRecipientValid = false;
       return;
     }
 
     this.validateRecipientAccount(accountNumber);
   }
 
+  // Validate amount on blur
+  onAmountBlur(): void {
+    if (!this.formData.amount) {
+      this.amountError = null;
+      return;
+    }
+
+    // Check if amount is valid
+    if (this.formData.amount <= 0) {
+      this.amountError = 'Amount must be greater than 0';
+      return;
+    }
+
+    // Check if sufficient balance is available
+    if (this.selectedAccount) {
+      const availableBalance = parseFloat(this.selectedAccount.availableBalance);
+      if (this.formData.amount > availableBalance) {
+        this.amountError = `Insufficient balance. Available: ${this.selectedAccount.currency} ${this.formatAmount(availableBalance)}`;
+        return;
+      }
+    }
+
+    // Clear error if amount is valid
+    this.amountError = null;
+  }
+
+  // Check if amount is valid
+  isAmountValid(): boolean {
+    if (!this.formData.amount || !this.selectedAccount) {
+      return false;
+    }
+    
+    const amount = this.formData.amount;
+    const availableBalance = parseFloat(this.selectedAccount.availableBalance);
+    
+    return amount > 0 && amount <= availableBalance;
+  }
+
   // Validate recipient account via API
   validateRecipientAccount(accountNumber: string): void {
     this.validating = true;
-    this.error = null;
+    this.accountError = null;
 
     this.transactionService.validateRecipientAccount(accountNumber).subscribe({
-      next: (data) => {
+      next: (response) => {
         this.validating = false;
-        this.recipientDetails = data;
+        this.isRecipientValid = response.valid === true;
+        if (!this.isRecipientValid) {
+          this.accountError = 'Invalid account number';
+        }
       },
       error: (err) => {
         this.validating = false;
-        this.error = err.error?.message || 'Invalid account number';
-        this.recipientDetails = null;
+        this.accountError = err.error?.message || 'Invalid account number';
+        this.isRecipientValid = false;
       }
     });
   }
@@ -123,7 +169,7 @@ export class CreateTransactionComponent implements OnInit {
       return false;
     }
 
-    if (!this.recipientDetails) {
+    if (!this.isRecipientValid) {
       this.error = 'Please validate the recipient account first';
       return false;
     }
@@ -200,8 +246,10 @@ export class CreateTransactionComponent implements OnInit {
       description: '',
       notes: ''
     };
-    this.recipientDetails = null;
+    this.isRecipientValid = false;
     this.selectedAccount = null;
+    this.accountError = null;
+    this.amountError = null;
     this.error = null;
     this.success = null;
     this.transferResult = null;

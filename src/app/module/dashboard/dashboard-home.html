@@ -35,7 +35,14 @@
   <section class="welcome-section" *ngIf="user$ | async as user">
     <div class="welcome-content">
       <h2 class="welcome-title">Welcome back, {{ userFullName$ | async }}!</h2>
-      <p class="welcome-subtitle">Manage your accounts and banking needs</p>
+      <p class="welcome-subtitle">Manage your accounts and banking needs </p>
+      <div class="customer-id-container">
+        <p class="welcome-subtitle">Customer ID: {{ customerId$ | async }}</p>
+        <button class="copy-btn" (click)="copyCustomerId()" [title]="copySuccess ? 'Copied!' : 'Copy Customer ID'">
+          <span *ngIf="!copySuccess" style="font-style: normal !important;">📋</span>
+          <span *ngIf="copySuccess" style="font-style: normal !important;">✓</span>
+        </button>
+      </div>
     </div>
     <div class="account-summary">
       <div class="total-balance">
@@ -88,7 +95,11 @@
   <section class="quick-links-section">
     <h3 class="section-title">Quick Actions</h3>
     <div class="quick-links-grid">
-      <div class="quick-link-card" *ngFor="let link of quickLinks" (click)="onQuickLinkClick(link)">
+      <div 
+        class="quick-link-card" 
+        [class.coming-soon]="link.action && (link.action === 'upi-coming-soon' || link.action === 'loan-coming-soon')"
+        *ngFor="let link of quickLinks" 
+        (click)="onQuickLinkClick(link)">
         <div class="quick-link-icon" style="font-style: normal !important;">{{ link.icon }}</div>
         <div class="quick-link-content">
           <h4 class="quick-link-title">{{ link.title }}</h4>

@@ -17,22 +17,6 @@
       "order": 2
     },
     {
-      "id": "accounts",
-      "label": "My Accounts",
-      "routerLink": "/accounts",
-      "icon": "💳",
-      "roles": [],
-      "order": 3
-    },
-    {
-      "id": "transfers",
-      "label": "Transfers",
-      "routerLink": "/transfers",
-      "icon": "💸",
-      "roles": [],
-      "order": 4
-    },
-    {
       "id": "transactions",
       "label": "Transactions",
       "routerLink": "/dashboard/transactions",
@@ -71,6 +55,37 @@
       ]
     },
     {
+      "id": "neft",
+      "label": "NEFT Transfers",
+      "routerLink": "/dashboard/neft",
+      "icon": "💸",
+      "roles": ["customer"],
+      "order": 6,
+      "children": [
+        {
+          "id": "neft-beneficiaries",
+          "label": "My Beneficiaries",
+          "routerLink": "/dashboard/neft/beneficiaries",
+          "icon": "👥",
+          "roles": ["customer"]
+        },
+        {
+          "id": "neft-transfer",
+          "label": "New NEFT Transfer",
+          "routerLink": "/dashboard/neft/transfer",
+          "icon": "➡️",
+          "roles": ["customer"]
+        },
+        {
+          "id": "neft-history",
+          "label": "Transfer History",
+          "routerLink": "/dashboard/neft/history",
+          "icon": "📜",
+          "roles": ["customer"]
+        }
+      ]
+    },
+    {
       "id": "admin-dashboard",
       "label": "Admin Dashboard",
       "routerLink": "/dashboard/admin",
@@ -79,36 +94,35 @@
       "order": 1
     },
     {
-      "id": "user-management",
-      "label": "User Management",
-      "routerLink": "/user-management",
-      "icon": "👥",
+      "id": "admin-neft",
+      "label": "NEFT Management",
+      "routerLink": "/dashboard/admin-neft",
+      "icon": "💳",
       "roles": ["admin", "superadmin"],
-      "order": 11
-    },
-    {
-      "id": "reports",
-      "label": "Reports",
-      "routerLink": "/reports",
-      "icon": "📊",
-      "roles": ["admin", "superadmin"],
-      "order": 12
-    },
-    {
-      "id": "system-settings",
-      "label": "System Settings",
-      "routerLink": "/system-settings",
-      "icon": "🔧",
-      "roles": ["superadmin"],
-      "order": 20
-    },
-    {
-      "id": "audit-logs",
-      "label": "Audit Logs",
-      "routerLink": "/audit-logs",
-      "icon": "📝",
-      "roles": ["superadmin"],
-      "order": 21
+      "order": 10,
+      "children": [
+        {
+          "id": "admin-neft-dashboard",
+          "label": "NEFT Dashboard",
+          "routerLink": "/dashboard/admin-neft/dashboard",
+          "icon": "📊",
+          "roles": ["admin", "superadmin"]
+        },
+        {
+          "id": "admin-neft-batches",
+          "label": "Batch Management",
+          "routerLink": "/dashboard/admin-neft/batches",
+          "icon": "📦",
+          "roles": ["admin", "superadmin"]
+        },
+        {
+          "id": "admin-neft-transactions",
+          "label": "All Transactions",
+          "routerLink": "/dashboard/admin-neft/transactions",
+          "icon": "📋",
+          "roles": ["admin", "superadmin"]
+        }
+      ]
     }
   ]
 }

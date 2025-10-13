@@ -1,0 +1,140 @@
+<div class="batch-list-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="btn-back" (click)="backToDashboard()">
+        ← Back to Dashboard
+      </button>
+      <div>
+        <h1 class="page-title">NEFT Batch Management</h1>
+        <p class="page-subtitle">View and manage all NEFT batches</p>
+      </div>
+    </div>
+    <button class="btn btn-primary" (click)="loadBatches()">
+      🔄 Refresh
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading batches...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error()" class="alert alert-danger">
+    {{ error() }}
+    <button class="btn btn-secondary" (click)="loadBatches()">Retry</button>
+  </div>
+
+  <!-- Filters -->
+  <div *ngIf="!loading() && !error()" class="filters-section">
+    <div class="filter-group">
+      <label for="status-filter">Status:</label>
+      <select 
+        id="status-filter" 
+        class="form-select" 
+        [value]="selectedStatus()"
+        (change)="onStatusFilterChange($event)">
+        <option value="ALL">All Statuses</option>
+        <option value="COMPLETED">Completed</option>
+        <option value="PROCESSING">Processing</option>
+        <option value="FAILED">Failed</option>
+        <option value="PARTIAL">Partial</option>
+        <option value="SCHEDULED">Scheduled</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label for="search-input">Search Batch ID:</label>
+      <input 
+        id="search-input"
+        type="text" 
+        class="form-input" 
+        placeholder="Enter batch ID..."
+        [value]="searchTerm()"
+        (input)="onSearchChange($event)" />
+    </div>
+
+    <div class="filter-stats">
+      <span class="stats-label">Total Batches:</span>
+      <span class="stats-value">{{ filteredBatches().length }}</span>
+    </div>
+  </div>
+
+  <!-- Batches List -->
+  <div *ngIf="!loading() && !error()" class="batches-content">
+    <!-- Empty State -->
+    <div *ngIf="filteredBatches().length === 0" class="empty-state">
+      <div class="empty-icon">📦</div>
+      <h3>No Batches Found</h3>
+      <p>No batches match your current filters</p>
+    </div>
+
+    <!-- Batches Table -->
+    <div *ngIf="filteredBatches().length > 0" class="batches-table-container">
+      <table class="batches-table">
+        <thead>
+          <tr>
+            <th>Batch ID</th>
+            <th>Batch Time</th>
+            <th>Transactions</th>
+            <th>Total Amount</th>
+            <th>Status</th>
+            <th>Processed At</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let batch of filteredBatches()" class="batch-row">
+            <td class="batch-id">
+              <strong>{{ batch.batchId }}</strong>
+            </td>
+            <td>{{ formatTime(batch.batchTime) }}</td>
+            <td class="text-center">
+              <span class="badge badge-info">{{ batch.transactionCount }}</span>
+            </td>
+            <td class="amount">{{ formatCurrency(batch.totalAmount) }}</td>
+            <td>
+              <span class="status-badge" [ngClass]="getStatusClass(batch.status)">
+                {{ batch.status }}
+              </span>
+            </td>
+            <td>{{ formatDateTime(batch.processedAt) }}</td>
+            <td>
+              <button 
+                class="btn btn-sm btn-primary" 
+                (click)="viewBatchDetails(batch.batchId)">
+                View Details
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="summary-section" *ngIf="filteredBatches().length > 0">
+      <h3>Summary</h3>
+      <div class="summary-cards">
+        <div class="summary-card">
+          <div class="summary-label">Total Batches</div>
+          <div class="summary-value">{{ filteredBatches().length }}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Total Transactions</div>
+          <div class="summary-value">
+            {{ getTotalTransactionCount() }}
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-label">Total Amount</div>
+          <div class="summary-value">
+            {{ formatCurrency(getTotalAmount()) }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,338 @@
+<div class="beneficiary-form-container">
+  <!-- Header -->
+  <div class="page-header">
+    <button class="btn-back" (click)="navigateToBeneficiaries()">← Back</button>
+    <h1 class="page-title">{{ isEditMode() ? 'Edit' : 'Add New' }} Beneficiary</h1>
+    <p class="page-subtitle">{{ isEditMode() ? 'Update beneficiary details' : 'Add a beneficiary for quick NEFT transfers' }}</p>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading...</p>
+  </div>
+
+  <!-- Form -->
+  <div *ngIf="!loading()" class="form-wrapper">
+    <!-- Step Indicator -->
+    <div class="step-indicator">
+      <div class="step" [class.active]="currentStep() === 1" [class.completed]="currentStep() > 1">
+        <div class="step-number">1</div>
+        <div class="step-label">Beneficiary Details</div>
+      </div>
+      <div class="step-line" [class.completed]="currentStep() > 1"></div>
+      <div class="step" [class.active]="currentStep() === 2">
+        <div class="step-number">2</div>
+        <div class="step-label">Additional Information</div>
+      </div>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="error()" class="alert alert-danger">
+      {{ error() }}
+    </div>
+
+    <form [formGroup]="beneficiaryForm">
+      <!-- Step 1: Beneficiary Details -->
+      <div *ngIf="currentStep() === 1" class="form-step">
+        <h2 class="step-title">Beneficiary Details</h2>
+
+        <!-- Beneficiary Name -->
+        <div class="form-group">
+          <label for="beneficiaryName" class="form-label">Beneficiary Full Name *</label>
+          <input
+            type="text"
+            id="beneficiaryName"
+            formControlName="beneficiaryName"
+            class="form-control"
+            placeholder="Enter name as per bank records"
+            [class.is-invalid]="beneficiaryForm.get('beneficiaryName')?.invalid && beneficiaryForm.get('beneficiaryName')?.touched"
+          />
+          <small class="form-help">Ensure name matches beneficiary's bank account</small>
+          <div *ngIf="beneficiaryForm.get('beneficiaryName')?.invalid && beneficiaryForm.get('beneficiaryName')?.touched" class="invalid-feedback">
+            Please enter a valid name (minimum 3 characters)
+          </div>
+        </div>
+
+        <!-- Account Number -->
+        <div class="form-group">
+          <label for="accountNumber" class="form-label">Account Number *</label>
+          <input
+            type="text"
+            id="accountNumber"
+            formControlName="accountNumber"
+            class="form-control"
+            placeholder="Enter account number"
+            [class.is-invalid]="beneficiaryForm.get('accountNumber')?.invalid && beneficiaryForm.get('accountNumber')?.touched"
+          />
+          <div *ngIf="beneficiaryForm.get('accountNumber')?.invalid && beneficiaryForm.get('accountNumber')?.touched" class="invalid-feedback">
+            Please enter a valid account number (9-18 digits)
+          </div>
+        </div>
+
+        <!-- Confirm Account Number -->
+        <div class="form-group">
+          <label for="confirmAccountNumber" class="form-label">Confirm Account Number *</label>
+          <input
+            type="text"
+            id="confirmAccountNumber"
+            formControlName="confirmAccountNumber"
+            class="form-control"
+            placeholder="Re-enter account number"
+            [class.is-invalid]="!checkAccountNumberMatch() && beneficiaryForm.get('confirmAccountNumber')?.touched"
+            [class.is-valid]="checkAccountNumberMatch() && beneficiaryForm.get('confirmAccountNumber')?.value"
+          />
+          <div *ngIf="!checkAccountNumberMatch() && beneficiaryForm.get('confirmAccountNumber')?.touched" class="invalid-feedback">
+            Account numbers do not match
+          </div>
+          <div *ngIf="checkAccountNumberMatch() && beneficiaryForm.get('confirmAccountNumber')?.value" class="valid-feedback">
+            ✓ Account numbers match
+          </div>
+        </div>
+
+        <!-- IFSC Code -->
+        <div class="form-group">
+          <label for="ifscCode" class="form-label">IFSC Code *</label>
+          <input
+            type="text"
+            id="ifscCode"
+            formControlName="ifscCode"
+            class="form-control"
+            placeholder="ABCD0123456"
+            maxlength="11"
+            style="text-transform: uppercase"
+            [class.is-invalid]="beneficiaryForm.get('ifscCode')?.invalid && beneficiaryForm.get('ifscCode')?.touched"
+          />
+          
+          <!-- IFSC Validation Loading -->
+          <div *ngIf="validatingIFSC()" class="ifsc-validation">
+            <div class="spinner-small"></div>
+            <span>Validating IFSC code...</span>
+          </div>
+
+          <!-- IFSC Validation Success -->
+          <div *ngIf="ifscValidation()?.isValid" class="ifsc-validation success">
+            <div class="validation-icon">✓</div>
+            <div class="validation-details">
+              <strong>Valid IFSC Code</strong>
+              <p *ngIf="ifscValidation()?.bankName"><strong>Bank:</strong> {{ ifscValidation()?.bankName }}</p>
+              <p *ngIf="ifscValidation()?.branchCode"><strong>Branch Code:</strong> {{ ifscValidation()?.branchCode }}</p>
+              <p *ngIf="ifscValidation()?.message" class="text-success">{{ ifscValidation()?.message }}</p>
+            </div>
+          </div>
+
+          <!-- IFSC Validation Error -->
+          <div *ngIf="ifscValidation() && !ifscValidation()?.isValid" class="ifsc-validation error">
+            <div class="validation-icon">✗</div>
+            <span>{{ ifscValidation()?.message || 'Invalid IFSC code. Please check and try again.' }}</span>
+          </div>
+
+          <div *ngIf="beneficiaryForm.get('ifscCode')?.invalid && beneficiaryForm.get('ifscCode')?.touched" class="invalid-feedback">
+            Please enter a valid IFSC code (Format: ABCD0123456)
+          </div>
+        </div>
+
+        <!-- Mobile Number (Optional) -->
+        <div class="form-group">
+          <label for="mobileNumber" class="form-label">Mobile Number (Optional)</label>
+          <input
+            type="tel"
+            id="mobileNumber"
+            formControlName="mobileNumber"
+            class="form-control"
+            placeholder="+919876543210 or 9876543210"
+            [class.is-invalid]="beneficiaryForm.get('mobileNumber')?.invalid && beneficiaryForm.get('mobileNumber')?.touched"
+          />
+          <small class="form-help">Enter 10-15 digits, can start with +</small>
+          <div *ngIf="beneficiaryForm.get('mobileNumber')?.invalid && beneficiaryForm.get('mobileNumber')?.touched" class="invalid-feedback">
+            Mobile number must be 10-15 digits, can start with +
+          </div>
+        </div>
+
+        <!-- Email (Optional) -->
+        <div class="form-group">
+          <label for="email" class="form-label">Email Address (Optional)</label>
+          <input
+            type="email"
+            id="email"
+            formControlName="email"
+            class="form-control"
+            placeholder="beneficiary@example.com"
+            [class.is-invalid]="beneficiaryForm.get('email')?.invalid && beneficiaryForm.get('email')?.touched"
+          />
+          <div *ngIf="beneficiaryForm.get('email')?.invalid && beneficiaryForm.get('email')?.touched" class="invalid-feedback">
+            Please enter a valid email address
+          </div>
+        </div>
+
+        <!-- Step 1 Actions -->
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="cancelForm()">Cancel</button>
+          <button type="button" class="btn btn-primary" (click)="nextStep()" [disabled]="!step1Valid">
+            Next: Additional Information →
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2: Additional Information -->
+      <div *ngIf="currentStep() === 2" class="form-step">
+        <h2 class="step-title">Additional Information</h2>
+
+        <!-- Nickname -->
+        <div class="form-group">
+          <label for="nickname" class="form-label">Nickname (Recommended)</label>
+          <input
+            type="text"
+            id="nickname"
+            formControlName="nickname"
+            class="form-control"
+            placeholder="e.g., Brother, Supplier, Landlord"
+            maxlength="50"
+          />
+          <small class="form-help">Give a nickname for easy identification</small>
+        </div>
+
+        <!-- Relationship -->
+        <div class="form-group">
+          <label for="relationship" class="form-label">Relationship (Optional)</label>
+          <select id="relationship" formControlName="relationship" class="form-control">
+            <option value="">Select relationship</option>
+            <option *ngFor="let rel of relationshipOptions" [value]="rel">{{ rel }}</option>
+          </select>
+          <small class="form-help">For your reference only</small>
+        </div>
+
+        <!-- Notes -->
+        <div class="form-group">
+          <label for="notes" class="form-label">Notes (Optional)</label>
+          <textarea
+            id="notes"
+            formControlName="notes"
+            class="form-control"
+            rows="4"
+            placeholder="Any additional notes about this beneficiary"
+            maxlength="200"
+          ></textarea>
+          <small class="form-help">{{ 200 - (beneficiaryForm.get('notes')?.value?.length || 0) }} characters remaining</small>
+        </div>
+
+        <!-- Step 2 Actions -->
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="previousStep()">← Back</button>
+          <button type="button" class="btn btn-primary" (click)="openReviewModal()" [disabled]="!step1Valid || !step2Valid">
+            Review & {{ isEditMode() ? 'Update' : 'Add' }}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Review Modal -->
+  <div *ngIf="showReviewModal()" class="modal-overlay" (click)="closeReviewModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Review Your Details</h3>
+        <button class="close-btn" (click)="closeReviewModal()">×</button>
+      </div>
+      
+      <div class="modal-body">
+        <!-- Warning Box -->
+        <div class="alert alert-warning">
+          <strong>⚠️ Please verify all details carefully</strong>
+          <p>Incorrect details may cause transfer failures. Ensure account number and IFSC match the beneficiary's bank records.</p>
+        </div>
+
+        <!-- Beneficiary Information -->
+        <div class="review-section">
+          <h4>Beneficiary Information</h4>
+          <div class="review-item">
+            <span class="review-label">Name:</span>
+            <span class="review-value">{{ beneficiaryForm.get('beneficiaryName')?.value }}</span>
+          </div>
+          <div class="review-item" *ngIf="beneficiaryForm.get('nickname')?.value">
+            <span class="review-label">Nickname:</span>
+            <span class="review-value">{{ beneficiaryForm.get('nickname')?.value }}</span>
+          </div>
+          <div class="review-item" *ngIf="beneficiaryForm.get('relationship')?.value">
+            <span class="review-label">Relationship:</span>
+            <span class="review-value">{{ beneficiaryForm.get('relationship')?.value }}</span>
+          </div>
+        </div>
+
+        <!-- Bank Details -->
+        <div class="review-section">
+          <h4>Bank Details</h4>
+          <div class="review-item">
+            <span class="review-label">Bank Name:</span>
+            <span class="review-value">{{ ifscValidation()?.bankName }}</span>
+          </div>
+          <div class="review-item">
+            <span class="review-label">Account Number:</span>
+            <span class="review-value">{{ beneficiaryForm.get('accountNumber')?.value }}</span>
+          </div>
+          <div class="review-item">
+            <span class="review-label">IFSC Code:</span>
+            <span class="review-value">{{ beneficiaryForm.get('ifscCode')?.value }}</span>
+          </div>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="review-section" *ngIf="beneficiaryForm.get('mobileNumber')?.value || beneficiaryForm.get('email')?.value">
+          <h4>Contact Information</h4>
+          <div class="review-item" *ngIf="beneficiaryForm.get('mobileNumber')?.value">
+            <span class="review-label">Mobile:</span>
+            <span class="review-value">{{ beneficiaryForm.get('mobileNumber')?.value }}</span>
+          </div>
+          <div class="review-item" *ngIf="beneficiaryForm.get('email')?.value">
+            <span class="review-label">Email:</span>
+            <span class="review-value">{{ beneficiaryForm.get('email')?.value }}</span>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="review-section" *ngIf="beneficiaryForm.get('notes')?.value">
+          <h4>Notes</h4>
+          <p>{{ beneficiaryForm.get('notes')?.value }}</p>
+        </div>
+
+        <!-- Verification Status Info -->
+        <div class="alert alert-info">
+          <p><strong>Verification Status:</strong></p>
+          <p>This beneficiary will be marked as 'Pending Verification'. You can still initiate transfers, but the first transfer may take longer for verification.</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeReviewModal()">Go Back to Edit</button>
+        <button class="btn btn-primary" (click)="submitForm()" [disabled]="submitting()">
+          <span *ngIf="!submitting()">Confirm & {{ isEditMode() ? 'Update' : 'Add' }}</span>
+          <span *ngIf="submitting()">
+            <span class="spinner-small"></span> Saving...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Modal -->
+  <div *ngIf="showSuccessModal()" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-body success-modal">
+        <div class="success-icon">✓</div>
+        <h2>Beneficiary {{ isEditMode() ? 'Updated' : 'Added' }} Successfully!</h2>
+        <p class="beneficiary-name">{{ beneficiaryForm.get('beneficiaryName')?.value }}</p>
+        <div class="beneficiary-summary">
+          <p>{{ ifscValidation()?.bankName }}</p>
+          <p>Account: {{ beneficiaryForm.get('accountNumber')?.value }}</p>
+          <span class="status-badge badge-warning">Pending Verification</span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-primary" (click)="navigateToTransfer()">Transfer to {{ beneficiaryForm.get('beneficiaryName')?.value }}</button>
+        <button class="btn btn-secondary" (click)="navigateToBeneficiaries()">View All Beneficiaries</button>
+      </div>
+    </div>
+  </div>
+</div>
+

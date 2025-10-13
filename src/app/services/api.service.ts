@@ -15,10 +15,18 @@ export class ApiService {
   private readonly baseUrl = '/api';
 
   private getHeaders(): HttpHeaders {
-    return new HttpHeaders({
+    let headers = new HttpHeaders({
       'Content-Type': 'application/json',
       'Accept': 'application/json'
     });
+
+    // Add bearer token if available
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers = headers.set('Authorization', `Bearer ${token}`);
+    }
+
+    return headers;
   }
 
   /**
@@ -85,6 +93,69 @@ export class ApiService {
     });
     
     return this.http.post(`${this.baseUrl}/${endpoint}`, data, {
+      headers: httpHeaders
+    });
+  }
+
+  put(endpoint: string, data: any, headers: any = {}): Observable<any> {
+    // Check session validity before making the request
+    // Skip check for auth endpoints
+    if (!endpoint.startsWith('auth/') && !this.checkSessionValidity()) {
+      return throwError(() => new Error('Session expired'));
+    }
+
+    let httpHeaders = this.getHeaders();
+    
+    // Add additional headers if provided
+    Object.keys(headers).forEach(key => {
+      if (headers[key] !== undefined) {
+        httpHeaders = httpHeaders.set(key, headers[key]);
+      }
+    });
+    
+    return this.http.put(`${this.baseUrl}/${endpoint}`, data, {
+      headers: httpHeaders
+    });
+  }
+
+  patch(endpoint: string, data: any, headers: any = {}): Observable<any> {
+    // Check session validity before making the request
+    // Skip check for auth endpoints
+    if (!endpoint.startsWith('auth/') && !this.checkSessionValidity()) {
+      return throwError(() => new Error('Session expired'));
+    }
+
+    let httpHeaders = this.getHeaders();
+    
+    // Add additional headers if provided
+    Object.keys(headers).forEach(key => {
+      if (headers[key] !== undefined) {
+        httpHeaders = httpHeaders.set(key, headers[key]);
+      }
+    });
+    
+    return this.http.patch(`${this.baseUrl}/${endpoint}`, data, {
+      headers: httpHeaders
+    });
+  }
+
+  delete(endpoint: string, headers: any = {}): Observable<any> {
+    // Check session validity before making the request
+    // Skip check for auth endpoints
+    if (!endpoint.startsWith('auth/') && !this.checkSessionValidity()) {
+      return throwError(() => new Error('Session expired'));
+    }
+
+    let httpHeaders = this.getHeaders();
+    
+    // Add additional headers if provided
+    Object.keys(headers).forEach(key => {
+      if (headers[key] !== undefined) {
+        httpHeaders = httpHeaders.set(key, headers[key]);
+      }
+    });
+    
+    return this.http.delete(`${this.baseUrl}/${endpoint}`, {
       headers: httpHeaders
     });
   }

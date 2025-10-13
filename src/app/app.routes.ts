@@ -54,6 +54,83 @@ export const routes: Routes = [
             canActivate: [rootGuard, roleGuard]
           }
         ]
+      },
+      {
+        path: 'neft',
+        canActivate: [rootGuard],
+        children: [
+          {
+            path: '',
+            redirectTo: 'transfer',
+            pathMatch: 'full'
+          },
+          {
+            path: 'beneficiaries',
+            loadComponent: () => import('./module/neft/beneficiary/beneficiary-list/beneficiary-list.component').then(m => m.BeneficiaryListComponent),
+            canActivate: [rootGuard, roleGuard]
+          },
+          {
+            path: 'beneficiaries/add',
+            loadComponent: () => import('./module/neft/beneficiary/beneficiary-form/beneficiary-form.component').then(m => m.BeneficiaryFormComponent),
+            canActivate: [rootGuard, roleGuard]
+          },
+          {
+            path: 'beneficiaries/edit/:id',
+            loadComponent: () => import('./module/neft/beneficiary/beneficiary-form/beneficiary-form.component').then(m => m.BeneficiaryFormComponent),
+            canActivate: [rootGuard, roleGuard]
+          },
+          {
+            path: 'transfer',
+            loadComponent: () => import('./module/neft/transfer/neft-transfer/neft-transfer.component').then(m => m.NeftTransferComponent),
+            canActivate: [rootGuard, roleGuard]
+          },
+          {
+            path: 'history',
+            loadComponent: () => import('./module/neft/transfer/neft-history/neft-history.component').then(m => m.NeftHistoryComponent),
+            canActivate: [rootGuard, roleGuard]
+          }
+        ]
+      },
+      {
+        path: 'admin-neft',
+        canActivate: [rootGuard],
+        children: [
+          {
+            path: '',
+            redirectTo: 'dashboard',
+            pathMatch: 'full'
+          },
+          {
+            path: 'dashboard',
+            loadComponent: () => import('./module/neft/admin/admin-neft-dashboard/admin-neft-dashboard.component').then(m => m.AdminNeftDashboardComponent),
+            canActivate: [rootGuard, roleGuard]
+          },
+          {
+            path: 'batches',
+            loadComponent: () => import('./module/neft/admin/batch-list/batch-list.component').then(m => m.BatchListComponent),
+            canActivate: [rootGuard, roleGuard]
+          },
+          {
+            path: 'batches/:batchId',
+            loadComponent: () => import('./module/neft/admin/batch-details/batch-details.component').then(m => m.BatchDetailsComponent),
+            canActivate: [rootGuard, roleGuard]
+          },
+          {
+            path: 'transactions',
+            loadComponent: () => import('./module/neft/admin/transaction-list/transaction-list.component').then(m => m.TransactionListComponent),
+            canActivate: [rootGuard, roleGuard]
+          },
+          {
+            path: 'transactions/:reference',
+            loadComponent: () => import('./module/neft/admin/transaction-details/transaction-details.component').then(m => m.TransactionDetailsComponent),
+            canActivate: [rootGuard, roleGuard]
+          },
+          {
+            path: 'beneficiaries',
+            loadComponent: () => import('./module/neft/admin/beneficiary-management/beneficiary-management.component').then(m => m.BeneficiaryManagementComponent),
+            canActivate: [rootGuard, roleGuard]
+          }
+        ]
       }
     ]
   },

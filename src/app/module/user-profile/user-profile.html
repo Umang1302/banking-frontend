@@ -48,11 +48,21 @@
       <span class="status-icon">📋</span>
       <h3>Complete Your Profile</h3>
       <p>{{ getStatusMessage() }}</p>
-      <div class="status-badge pending">Profile Completion Required</div>
+    
+      <div *ngIf="isRejected; else notRejected">
+        <div class="status-badge rejected">Requires Updates</div>
+        <div class="rejection-reason">
+          <strong>Rejection Reason:</strong> {{ rejectionReason }}
+        </div>
+      </div>
+    
+      <ng-template #notRejected>
+        <div class="status-badge pending">Profile Completion Required</div>
+      </ng-template>
     </div>
 
     <!-- Pending Approval Status -->
-    <div *ngIf="isPendingApproval() || (isPendingDetails() && submitSuccess)" class="status-message pending-approval">
+    <div *ngIf="isPendingApproval() || (isPendingDetails() && submitSuccess) && !isRejected" class="status-message pending-approval">
       <span class="status-icon">⏳</span>
       <h3>Profile Under Review</h3>
       <p>{{ getStatusMessage() }}</p>
@@ -65,17 +75,6 @@
       <h3>Profile Active</h3>
       <p>{{ getStatusMessage() }}</p>
       <div class="status-badge active">Approved & Active</div>
-    </div>
-
-    <!-- Rejected Status -->
-    <div *ngIf="isRejected() && !submitSuccess" class="status-message rejected">
-      <span class="status-icon">❌</span>
-      <h3>Profile Rejected</h3>
-      <p>{{ getStatusMessage() }}</p>
-      <div class="status-badge rejected">Requires Updates</div>
-      <div class="rejection-reason" *ngIf="(user$ | async)?.rejectionReason">
-        <strong>Rejection Reason:</strong> {{ (user$ | async)?.rejectionReason }}
-      </div>
     </div>
 
     <!-- Success Message for Updates -->
@@ -171,7 +170,7 @@
         <div class="form-group full-width">
           <label for="address" class="form-label">
             Street Address 
-            <span class="required" *ngIf="isPendingDetails() || isRejected()">*</span>
+            <span class="required" *ngIf="isPendingDetails() || isRejected">*</span>
           </label>
           <input 
             type="text" 
@@ -189,7 +188,7 @@
         <div class="form-group">
           <label for="city" class="form-label">
             City
-            <span class="required" *ngIf="isPendingDetails() || isRejected()">*</span>
+            <span class="required" *ngIf="isPendingDetails() || isRejected">*</span>
           </label>
           <input 
             type="text" 
@@ -207,7 +206,7 @@
         <div class="form-group">
           <label for="state" class="form-label">
             State/Province
-            <span class="required" *ngIf="isPendingDetails() || isRejected()">*</span>
+            <span class="required" *ngIf="isPendingDetails() || isRejected">*</span>
           </label>
           <input 
             type="text" 
@@ -240,7 +239,7 @@
         <div class="form-group">
           <label for="nationalId" class="form-label">
             National ID
-            <span class="required" *ngIf="isPendingDetails() || isRejected()">*</span>
+            <span class="required" *ngIf="isPendingDetails() || isRejected">*</span>
           </label>
           <input 
             type="text" 
@@ -264,7 +263,7 @@
         <div class="form-group">
           <label for="dateOfBirth" class="form-label">
             Date of Birth
-            <span class="required" *ngIf="isPendingDetails() || isRejected()">*</span>
+            <span class="required" *ngIf="isPendingDetails() || isRejected">*</span>
           </label>
           <input 
             type="date" 
@@ -281,7 +280,7 @@
         <div class="form-group">
           <label for="occupation" class="form-label">
             Occupation
-            <span class="required" *ngIf="isPendingDetails() || isRejected()">*</span>
+            <span class="required" *ngIf="isPendingDetails() || isRejected">*</span>
           </label>
           <input 
             type="text" 
@@ -347,7 +346,7 @@
     </div>
 
     <!-- Reason for Update Section (only shown when editing existing profile) -->
-    <div class="form-section" *ngIf="isActive() && isEditing">
+    <!-- <div class="form-section" *ngIf="isActive() && isEditing">
       <h2 class="section-title">Reason for Update</h2>
       <div class="form-group full-width">
         <label for="reason" class="form-label">
@@ -364,10 +363,10 @@
           {{ getFieldError('reason') }}
         </div>
       </div>
-    </div>
+    </div> -->
 
     <!-- Form Actions -->
-    <div class="form-actions" *ngIf="canEdit() && (isPendingDetails() || isRejected() || (isActive() && isEditing))">
+    <div class="form-actions" *ngIf="canEdit() && (isPendingDetails() || (isActive() && isEditing))">
       <button 
         type="submit" 
         class="submit-btn"

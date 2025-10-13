@@ -13,6 +13,8 @@ import {
   selectIsAuthenticated,
   selectUserFullName,
   selectRole,
+  selectCustomer,
+  selectCustomerNumber
 } from './user.selectors';
 
 @Injectable({
@@ -30,6 +32,8 @@ export class UserService {
   isAuthenticated$ = this.store.select(selectIsAuthenticated);
   userFullName$ = this.store.select(selectUserFullName);
   role$ = this.store.select(selectRole);
+  customer$ = this.store.select(selectCustomer);
+  customerId$ = this.store.select(selectCustomerNumber);
 
   // Authentication methods
   login(credentials: { usernameOrEmailOrMobile: string; password: string }): void {

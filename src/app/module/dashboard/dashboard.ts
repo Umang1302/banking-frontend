@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 
@@ -24,6 +24,9 @@ export class DashboardComponent implements OnInit {
   
   // Navigation items
   navigationItems: NavigationItem[] = [];
+  
+  // Dropdown state
+  openDropdownIndex: number | null = null;
 
   constructor() {
     // Subscribe to role changes and update navigation items
@@ -38,6 +41,15 @@ export class DashboardComponent implements OnInit {
         this.navigationItems = [];
       }
     });
+  }
+  
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    // Close dropdown when clicking outside
+    const target = event.target as HTMLElement;
+    if (!target.closest('.nav-dropdown')) {
+      this.openDropdownIndex = null;
+    }
   }
   
   ngOnInit(): void {
@@ -73,5 +85,29 @@ export class DashboardComponent implements OnInit {
   getUserRoleDisplay(user: User | null): string {
     if (!user?.role) return 'User';
     return user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase();
+  }
+
+  isAnyChildActive(children: NavigationItem[]): boolean {
+    if (!children) return false;
+    const currentPath = this.router.url;
+    return children.some(child => currentPath.startsWith(child.routerLink));
+  }
+  
+  toggleDropdown(index: number, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (this.openDropdownIndex === index) {
+      this.openDropdownIndex = null;
+    } else {
+      this.openDropdownIndex = index;
+    }
+  }
+  
+  isDropdownOpen(index: number): boolean {
+    return this.openDropdownIndex === index;
+  }
+  
+  closeDropdown(): void {
+    this.openDropdownIndex = null;
   }
 }

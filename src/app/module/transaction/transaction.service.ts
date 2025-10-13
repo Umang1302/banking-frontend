@@ -59,10 +59,6 @@ export interface StatementRequest {
 
 export interface RecipientValidationResponse {
   valid: boolean;
-  accountNumber: string;
-  accountType: string;
-  accountHolderName: string;
-  currency: string;
 }
 
 export interface TransferRequest {

@@ -1,0 +1,176 @@
+<div class="admin-dashboard-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">NEFT Management Dashboard</h1>
+    <p class="page-subtitle">Monitor and manage NEFT transactions</p>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading dashboard data...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error()" class="alert alert-danger">
+    {{ error() }}
+    <button class="btn btn-secondary" (click)="loadDashboardData()">Retry</button>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!loading() && !error()" class="dashboard-content">
+    <!-- Widget Row 1: Batch Management -->
+    <div class="widget batch-status-widget">
+      <div class="widget-header">
+        <h3>NEFT Batch Management</h3>
+        <button class="btn-refresh" (click)="loadDashboardData()">🔄</button>
+      </div>
+      <div class="widget-body">
+        <div class="batch-info">
+          <div class="info-card">
+            <div class="info-label">Total Batches</div>
+            <div class="info-value large">{{ totalBatches }}</div>
+            <div class="info-sublabel">All batches</div>
+          </div>
+          <div class="info-card">
+            <div class="info-label">Pending Transactions</div>
+            <div class="info-value large">{{ transactionCounts?.pending || 0 }}</div>
+            <div class="info-sublabel">Awaiting batch</div>
+          </div>
+          <div class="info-card">
+            <div class="info-label">Processing</div>
+            <div class="info-value large">{{ transactionCounts?.processing || 0 }}</div>
+            <div class="info-sublabel">In progress</div>
+          </div>
+        </div>
+        <div class="batch-actions">
+          <button 
+            class="btn btn-primary" 
+            (click)="processBatchNow()"
+            [disabled]="!transactionCounts?.pending || transactionCounts?.pending === 0"
+            [title]="!transactionCounts?.pending || transactionCounts?.pending === 0 ? 'No pending transactions to process' : 'Process pending batch now'">
+            Process Batch Now
+          </button>
+          <button class="btn btn-secondary" (click)="navigateTo('/dashboard/admin-neft/batches')">
+            View All Batches
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Widget Row 2: Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card" (click)="navigateTo('/dashboard/admin-neft/transactions')">
+        <div class="stat-icon">📊</div>
+        <div class="stat-content">
+          <div class="stat-label">Total Transfers</div>
+          <div class="stat-value">{{ stats()?.totalTransactions || 0 }}</div>
+          <div class="stat-sublabel">Today</div>
+        </div>
+      </div>
+
+      <div class="stat-card" (click)="navigateTo('/dashboard/admin-neft/transactions')">
+        <div class="stat-icon">💰</div>
+        <div class="stat-content">
+          <div class="stat-label">Total Volume</div>
+          <div class="stat-value">{{ stats()?.totalAmount ? formatCurrency(stats()!.totalAmount) : '₹0' }}</div>
+          <div class="stat-sublabel">Today</div>
+        </div>
+      </div>
+
+      <div class="stat-card success" (click)="navigateTo('/dashboard/admin-neft/transactions?status=COMPLETED')">
+        <div class="stat-icon">✓</div>
+        <div class="stat-content">
+          <div class="stat-label">Success Rate</div>
+          <div class="stat-value">{{ stats()?.successRate || 0 }}%</div>
+          <div class="stat-sublabel">{{ stats()?.completedCount || 0 }} completed</div>
+        </div>
+      </div>
+
+      <div class="stat-card danger" (click)="navigateTo('/dashboard/admin-neft/transactions?status=FAILED')">
+        <div class="stat-icon">✗</div>
+        <div class="stat-content">
+          <div class="stat-label">Failed Transfers</div>
+          <div class="stat-value">{{ stats()?.failedCount || 0 }}</div>
+          <div class="stat-sublabel">Need attention</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Widget Row 3: Failed Transfers Alert -->
+    <div class="widget failed-transfers-widget" *ngIf="failedTransfers().length > 0">
+      <div class="widget-header alert-header">
+        <h3>⚠️ Failed Transfers</h3>
+        <span class="badge badge-danger">{{ failedTransfers().length }}</span>
+      </div>
+      <div class="widget-body">
+        <div class="failed-list">
+          <div *ngFor="let transfer of failedTransfers()" class="failed-item">
+            <div class="failed-info">
+              <div class="customer-name">{{ transfer.beneficiaryName }} ({{ transfer.eftReference }})</div>
+              <div class="failure-reason">{{ transfer.failureReason || 'Unknown failure reason' }}</div>
+              <div class="initiated-by">Initiated by: {{ transfer.initiatedBy }}</div>
+            </div>
+            <div class="failed-amount">{{ formatCurrency(transfer.amount) }}</div>
+            <button class="btn btn-sm btn-primary" (click)="navigateTo('/dashboard/admin-neft/transactions/' + transfer.eftReference)">
+              Investigate
+            </button>
+          </div>
+        </div>
+        <button class="btn btn-link" (click)="navigateTo('/dashboard/admin-neft/transactions?status=FAILED')">
+          View All Failed Transfers →
+        </button>
+      </div>
+    </div>
+
+    <!-- Widget Row 4: Today's Activity -->
+    <div class="widget activity-widget" *ngIf="todayActivity()">
+      <div class="widget-header">
+        <h3>Today's NEFT Activity</h3>
+      </div>
+      <div class="widget-body">
+        <div class="activity-stats">
+          <div class="activity-stat">
+            <div class="stat-number">{{ todayActivity()?.totalTransfers || 0 }}</div>
+            <div class="stat-label">Total Transfers</div>
+          </div>
+          <div class="activity-stat">
+            <div class="stat-number">{{ todayActivity()?.totalVolume ? formatCurrency(todayActivity()!.totalVolume) : '₹0' }}</div>
+            <div class="stat-label">Total Volume</div>
+          </div>
+          <div class="activity-stat">
+            <div class="stat-number">{{ todayActivity()?.successRate || 0 }}%</div>
+            <div class="stat-label">Success Rate</div>
+          </div>
+        </div>
+        <button class="btn btn-secondary" (click)="navigateTo('/dashboard/admin-neft/analytics')">
+          View Analytics
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <h3>Quick Actions</h3>
+      <div class="actions-grid">
+        <button class="action-btn" (click)="navigateTo('/dashboard/admin-neft/transactions')">
+          <span class="action-icon">📋</span>
+          <span class="action-label">View All Transactions</span>
+        </button>
+        <button class="action-btn" (click)="navigateTo('/dashboard/admin-neft/batches')">
+          <span class="action-icon">⚙️</span>
+          <span class="action-label">Manage Batches</span>
+        </button>
+        <button class="action-btn" (click)="navigateTo('/dashboard/admin-neft/beneficiaries')">
+          <span class="action-icon">👥</span>
+          <span class="action-label">Beneficiary Verification</span>
+        </button>
+        <button class="action-btn" (click)="navigateTo('/dashboard/admin-neft/settings')">
+          <span class="action-icon">⚙️</span>
+          <span class="action-label">System Settings</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+

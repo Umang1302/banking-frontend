@@ -53,7 +53,29 @@ export class NavigationService {
     return this.ensureConfigLoaded().pipe(
       map(() => {
         const filteredItems = this.navigationConfig.items
-          .filter(item => item.roles.includes(userRole))
+          .filter(item => {
+            // If roles array is empty, allow all roles
+            if (item.roles.length === 0) return true;
+            // Otherwise check if user role is in the allowed roles
+            return item.roles.includes(userRole);
+          })
+          .map(item => {
+            // If item has children, filter them based on user role as well
+            if (item.children && item.children.length > 0) {
+              const filteredChildren = item.children.filter(child => {
+                // If roles array is empty, allow all roles
+                if (child.roles.length === 0) return true;
+                // Otherwise check if user role is in the allowed roles
+                return child.roles.includes(userRole);
+              });
+              
+              // Return the item with filtered children
+              return { ...item, children: filteredChildren };
+            }
+            
+            // Return item as-is if it has no children
+            return item;
+          })
           .sort((a, b) => (a.order || 0) - (b.order || 0));
 
         return filteredItems;

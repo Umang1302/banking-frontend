@@ -1,0 +1,564 @@
+<div class="beneficiary-management-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="btn-back" (click)="backToDashboard()">
+        ← Back to Dashboard
+      </button>
+      <div>
+        <h1 class="page-title">Beneficiary Management</h1>
+        <p class="page-subtitle">Approve, manage, and monitor all customer beneficiaries</p>
+      </div>
+    </div>
+    <button class="btn btn-primary" (click)="loadPendingBeneficiaries(); loadBeneficiaries()">
+      🔄 Refresh
+    </button>
+  </div>
+
+  <!-- Summary Statistics -->
+  <div class="stats-grid">
+    <div class="stat-card warning">
+      <div class="stat-icon">⏱</div>
+      <div class="stat-content">
+        <div class="stat-label">Pending Approval</div>
+        <div class="stat-value">{{ getPendingApprovalCount() }}</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">👥</div>
+      <div class="stat-content">
+        <div class="stat-label">Total Beneficiaries</div>
+        <div class="stat-value">{{ getTotalCount() }}</div>
+      </div>
+    </div>
+
+    <div class="stat-card success">
+      <div class="stat-icon">✓</div>
+      <div class="stat-content">
+        <div class="stat-label">Verified & Active</div>
+        <div class="stat-value">{{ getVerifiedCount() }}</div>
+      </div>
+    </div>
+
+    <div class="stat-card danger">
+      <div class="stat-icon">🚫</div>
+      <div class="stat-content">
+        <div class="stat-label">Blocked</div>
+        <div class="stat-value">{{ getBlockedCount() }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading beneficiaries...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error()" class="alert alert-danger">
+    {{ error() }}
+    <button class="btn btn-secondary" (click)="loadPendingBeneficiaries(); loadBeneficiaries()">Retry</button>
+  </div>
+
+  <!-- View Tabs -->
+  <div *ngIf="!loading() && !error()" class="view-tabs">
+    <button 
+      class="tab-btn" 
+      [class.active]="activeView() === 'pending'"
+      (click)="switchView('pending')">
+      ⏱ Pending Approval ({{ getPendingApprovalCount() }})
+    </button>
+    <button 
+      class="tab-btn" 
+      [class.active]="activeView() === 'all'"
+      (click)="switchView('all')">
+      👥 All Beneficiaries ({{ getTotalCount() }})
+    </button>
+  </div>
+
+  <!-- ============= PENDING APPROVAL VIEW ============= -->
+  <div *ngIf="!loading() && !error() && activeView() === 'pending'">
+    <!-- Search for Pending -->
+    <div class="filters-section">
+      <input
+        type="text"
+        placeholder="Search pending beneficiaries by name, account, IFSC, or bank..."
+        [value]="searchTerm()"
+        (input)="onPendingSearchChange($event)"
+        class="search-input"
+      />
+      <div class="filter-stats">
+        <span>Showing {{ filteredPending().length }} pending approvals</span>
+      </div>
+    </div>
+
+    <!-- Pending Beneficiaries Table -->
+    <div *ngIf="filteredPending().length > 0" class="table-container">
+      <table class="beneficiaries-table">
+        <thead>
+          <tr>
+            <th>Beneficiary Details</th>
+            <th>Bank Details</th>
+            <th>Contact</th>
+            <th>Submitted</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let beneficiary of filteredPending()" class="pending-row">
+            <td>
+              <div class="beneficiary-info">
+                <div class="name">{{ beneficiary.beneficiaryName }}</div>
+                <div class="account">{{ beneficiary.accountNumber }}</div>
+                <div *ngIf="beneficiary.nickname" class="nickname">
+                  <span class="badge badge-info">{{ beneficiary.nickname }}</span>
+                </div>
+                <span class="status-badge badge-warning">⏱ PENDING</span>
+              </div>
+            </td>
+            <td>
+              <div class="bank-info">
+                <div class="bank-name">{{ beneficiary.bankName }}</div>
+                <div class="branch-name">{{ beneficiary.branchName }}</div>
+                <div class="ifsc">{{ beneficiary.ifscCode }}</div>
+              </div>
+            </td>
+            <td>
+              <div class="contact-info">
+                <div *ngIf="beneficiary.mobile" class="mobile">📱 {{ beneficiary.mobile }}</div>
+                <div *ngIf="beneficiary.email" class="email">✉️ {{ beneficiary.email }}</div>
+                <div *ngIf="!beneficiary.mobile && !beneficiary.email" class="no-contact">N/A</div>
+              </div>
+            </td>
+            <td>
+              <div class="date-info">
+                <div>{{ formatDate(beneficiary.createdAt) }}</div>
+                <div class="relative-time">{{ getRelativeTime(beneficiary.createdAt) }}</div>
+              </div>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button 
+                  class="btn btn-sm btn-success" 
+                  (click)="approveBeneficiary(beneficiary)"
+                  [disabled]="actionInProgress()">
+                  ✓ Approve
+                </button>
+                <button 
+                  class="btn btn-sm btn-danger" 
+                  (click)="openRejectModal(beneficiary)"
+                  [disabled]="actionInProgress()">
+                  ✗ Reject
+                </button>
+                <button 
+                  class="btn btn-sm btn-secondary" 
+                  (click)="viewPendingDetails(beneficiary)">
+                  👁 View
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty Pending State -->
+    <div *ngIf="filteredPending().length === 0" class="empty-state">
+      <div class="empty-icon">✓</div>
+      <h3>No pending approvals</h3>
+      <p>All beneficiaries have been reviewed</p>
+    </div>
+  </div>
+
+  <!-- ============= ALL BENEFICIARIES VIEW ============= -->
+  <div *ngIf="!loading() && !error() && activeView() === 'all'">
+    <!-- Filters and Search -->
+    <div class="filters-section">
+      <div class="filter-group">
+        <input
+          type="text"
+          placeholder="Search by beneficiary, customer, account, IFSC, or bank..."
+          [value]="searchTerm()"
+          (input)="onSearchChange($event)"
+          class="search-input"
+        />
+      </div>
+
+      <div class="filter-row">
+        <div class="filter-group">
+          <label>Verification Status:</label>
+          <select
+            [value]="verificationFilter()"
+            (change)="onVerificationFilterChange($event)"
+            class="filter-select"
+          >
+            <option value="ALL">All</option>
+            <option value="VERIFIED">✓ Verified</option>
+            <option value="PENDING">⏱ Pending</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Status:</label>
+          <select
+            [value]="statusFilter()"
+            (change)="onStatusFilterChange($event)"
+            class="filter-select"
+          >
+            <option value="ALL">All</option>
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+            <option value="BLOCKED">Blocked</option>
+          </select>
+        </div>
+
+        <div class="filter-stats">
+          <span>Showing {{ filteredBeneficiaries().length }} of {{ beneficiaries().length }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Beneficiaries Table -->
+    <div *ngIf="filteredBeneficiaries().length > 0" class="table-container">
+      <table class="beneficiaries-table">
+        <thead>
+          <tr>
+            <th>Beneficiary Details</th>
+            <th>Customer</th>
+            <th>Bank Details</th>
+            <th>Status</th>
+            <th>Verification</th>
+            <th>Last Used</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let beneficiary of filteredBeneficiaries()">
+            <td>
+              <div class="beneficiary-info">
+                <div class="name">{{ beneficiary.beneficiaryName }}</div>
+                <div class="account">{{ beneficiary.accountNumber }}</div>
+                <div class="nickname" *ngIf="beneficiary.nickname">
+                  <span class="badge badge-info">{{ beneficiary.nickname }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="customer-info">
+                <div class="customer-name">{{ beneficiary.customerName }}</div>
+                <div class="customer-id">ID: {{ beneficiary.customerId }}</div>
+              </div>
+            </td>
+            <td>
+              <div class="bank-info">
+                <div class="bank-name">{{ beneficiary.bankName }}</div>
+                <div class="branch-name">{{ beneficiary.branchName }}</div>
+                <div class="ifsc">{{ beneficiary.ifscCode }}</div>
+              </div>
+            </td>
+            <td>
+              <span class="status-badge" [ngClass]="getStatusBadgeClass(beneficiary.status)">
+                {{ beneficiary.status }}
+              </span>
+            </td>
+            <td>
+              <span class="verification-badge" [ngClass]="getVerificationBadgeClass(beneficiary.isVerified)">
+                <span *ngIf="beneficiary.isVerified">✓ Verified</span>
+                <span *ngIf="!beneficiary.isVerified">⏱ Pending</span>
+              </span>
+            </td>
+            <td>
+              <div class="date-info">
+                <div>{{ formatDate(beneficiary.lastUsedAt) }}</div>
+                <div class="relative-time">{{ getRelativeTime(beneficiary.lastUsedAt) }}</div>
+              </div>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn btn-sm btn-secondary" (click)="viewDetails(beneficiary)">
+                  View
+                </button>
+                <button 
+                  *ngIf="beneficiary.status === 'ACTIVE'" 
+                  class="btn btn-sm btn-danger" 
+                  (click)="openBlockModal(beneficiary)"
+                  [disabled]="actionInProgress()">
+                  🚫 Block
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredBeneficiaries().length === 0" class="empty-state">
+      <div class="empty-icon">👥</div>
+      <h3>No beneficiaries found</h3>
+      <p>No beneficiaries match your current filters</p>
+    </div>
+  </div>
+</div>
+
+<!-- Pending Beneficiary Details Modal -->
+<div *ngIf="showPendingDetailsModal()" class="modal-overlay" (click)="closePendingDetailsModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Pending Beneficiary Details</h2>
+      <button class="btn-close" (click)="closePendingDetailsModal()">×</button>
+    </div>
+
+    <div *ngIf="selectedPendingBeneficiary()" class="modal-body">
+      <div class="details-grid">
+        <!-- Beneficiary Information -->
+        <div class="detail-section">
+          <h3>Beneficiary Information</h3>
+          <div class="detail-row">
+            <span class="detail-label">ID:</span>
+            <span class="detail-value">{{ selectedPendingBeneficiary()!.id }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Name:</span>
+            <span class="detail-value">{{ selectedPendingBeneficiary()!.beneficiaryName }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Nickname:</span>
+            <span class="detail-value">{{ selectedPendingBeneficiary()!.nickname || 'N/A' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Account Number:</span>
+            <span class="detail-value monospace">{{ selectedPendingBeneficiary()!.accountNumber }}</span>
+          </div>
+        </div>
+
+        <!-- Bank Information -->
+        <div class="detail-section">
+          <h3>Bank Information</h3>
+          <div class="detail-row">
+            <span class="detail-label">Bank Name:</span>
+            <span class="detail-value">{{ selectedPendingBeneficiary()!.bankName }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Branch:</span>
+            <span class="detail-value">{{ selectedPendingBeneficiary()!.branchName }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">IFSC Code:</span>
+            <span class="detail-value monospace">{{ selectedPendingBeneficiary()!.ifscCode }}</span>
+          </div>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="detail-section">
+          <h3>Contact Information</h3>
+          <div class="detail-row">
+            <span class="detail-label">Mobile:</span>
+            <span class="detail-value">{{ selectedPendingBeneficiary()!.mobile || 'N/A' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Email:</span>
+            <span class="detail-value">{{ selectedPendingBeneficiary()!.email || 'N/A' }}</span>
+          </div>
+        </div>
+
+        <!-- Status Information -->
+        <div class="detail-section">
+          <h3>Status Information</h3>
+          <div class="detail-row">
+            <span class="detail-label">Status:</span>
+            <span class="status-badge badge-warning">{{ selectedPendingBeneficiary()!.status }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Created:</span>
+            <span class="detail-value">{{ formatDate(selectedPendingBeneficiary()!.createdAt) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Last Updated:</span>
+            <span class="detail-value">{{ formatDate(selectedPendingBeneficiary()!.updatedAt) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-success" (click)="closePendingDetailsModal(); approveBeneficiary(selectedPendingBeneficiary()!)" [disabled]="actionInProgress()">
+        ✓ Approve
+      </button>
+      <button class="btn btn-danger" (click)="closePendingDetailsModal(); openRejectModal(selectedPendingBeneficiary()!)" [disabled]="actionInProgress()">
+        ✗ Reject
+      </button>
+      <button class="btn btn-secondary" (click)="closePendingDetailsModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- All Beneficiaries Details Modal -->
+<div *ngIf="showDetailsModal()" class="modal-overlay" (click)="closeDetailsModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Beneficiary Details</h2>
+      <button class="btn-close" (click)="closeDetailsModal()">×</button>
+    </div>
+
+    <div *ngIf="selectedBeneficiary()" class="modal-body">
+      <div class="details-grid">
+        <!-- Beneficiary Information -->
+        <div class="detail-section">
+          <h3>Beneficiary Information</h3>
+          <div class="detail-row">
+            <span class="detail-label">Name:</span>
+            <span class="detail-value">{{ selectedBeneficiary()!.beneficiaryName }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Nickname:</span>
+            <span class="detail-value">{{ selectedBeneficiary()!.nickname || 'N/A' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Account Number:</span>
+            <span class="detail-value monospace">{{ selectedBeneficiary()!.accountNumber }}</span>
+          </div>
+        </div>
+
+        <!-- Bank Information -->
+        <div class="detail-section">
+          <h3>Bank Information</h3>
+          <div class="detail-row">
+            <span class="detail-label">Bank Name:</span>
+            <span class="detail-value">{{ selectedBeneficiary()!.bankName }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Branch:</span>
+            <span class="detail-value">{{ selectedBeneficiary()!.branchName }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">IFSC Code:</span>
+            <span class="detail-value monospace">{{ selectedBeneficiary()!.ifscCode }}</span>
+          </div>
+        </div>
+
+        <!-- Status Information -->
+        <div class="detail-section">
+          <h3>Status Information</h3>
+          <div class="detail-row">
+            <span class="detail-label">Status:</span>
+            <span class="status-badge" [ngClass]="getStatusBadgeClass(selectedBeneficiary()!.status)">
+              {{ selectedBeneficiary()!.status }}
+            </span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Verification:</span>
+            <span class="verification-badge" [ngClass]="getVerificationBadgeClass(selectedBeneficiary()!.isVerified)">
+              <span *ngIf="selectedBeneficiary()!.isVerified">✓ Verified</span>
+              <span *ngIf="!selectedBeneficiary()!.isVerified">⏱ Pending Verification</span>
+            </span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Created At:</span>
+            <span class="detail-value">{{ formatDate(selectedBeneficiary()!.createdAt) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Last Used:</span>
+            <span class="detail-value">{{ formatDate(selectedBeneficiary()!.lastUsedAt) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button 
+        *ngIf="selectedBeneficiary()!.status === 'ACTIVE'" 
+        class="btn btn-danger" 
+        (click)="closeDetailsModal(); openBlockModal(selectedBeneficiary()!)"
+        [disabled]="actionInProgress()">
+        🚫 Block Beneficiary
+      </button>
+      <button class="btn btn-secondary" (click)="closeDetailsModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reject Modal -->
+<div *ngIf="showRejectModal()" class="modal-overlay" (click)="closeRejectModal()">
+  <div class="modal-content modal-small" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Reject Beneficiary</h2>
+      <button class="btn-close" (click)="closeRejectModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div *ngIf="selectedPendingBeneficiary()" class="confirmation-info">
+        <p><strong>Beneficiary:</strong> {{ selectedPendingBeneficiary()!.beneficiaryName }}</p>
+        <p><strong>Account:</strong> {{ selectedPendingBeneficiary()!.accountNumber }}</p>
+        <p><strong>Bank:</strong> {{ selectedPendingBeneficiary()!.bankName }}</p>
+      </div>
+
+      <div class="form-group">
+        <label for="rejectReason">Reason for rejection (optional):</label>
+        <textarea
+          id="rejectReason"
+          [value]="rejectReason()"
+          (input)="rejectReason.set($any($event.target).value)"
+          class="form-textarea"
+          rows="4"
+          placeholder="e.g., Invalid account details, suspicious activity, etc."
+        ></textarea>
+      </div>
+
+      <p class="warning-text">⚠️ This beneficiary will be marked as BLOCKED and cannot be used for transfers.</p>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-danger" (click)="confirmReject()" [disabled]="actionInProgress()">
+        ✗ Confirm Rejection
+      </button>
+      <button class="btn btn-secondary" (click)="closeRejectModal()" [disabled]="actionInProgress()">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Block Modal -->
+<div *ngIf="showBlockModal()" class="modal-overlay" (click)="closeBlockModal()">
+  <div class="modal-content modal-small" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Block Beneficiary</h2>
+      <button class="btn-close" (click)="closeBlockModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div *ngIf="selectedBeneficiary()" class="confirmation-info">
+        <p><strong>Beneficiary:</strong> {{ selectedBeneficiary()!.beneficiaryName }}</p>
+        <p><strong>Account:</strong> {{ selectedBeneficiary()!.accountNumber }}</p>
+        <p><strong>Bank:</strong> {{ selectedBeneficiary()!.bankName }}</p>
+        <p><strong>Customer:</strong> {{ selectedBeneficiary()!.customerName }}</p>
+      </div>
+
+      <div class="form-group">
+        <label for="blockReason">Reason for blocking (optional):</label>
+        <textarea
+          id="blockReason"
+          [value]="blockReason()"
+          (input)="blockReason.set($any($event.target).value)"
+          class="form-textarea"
+          rows="4"
+          placeholder="e.g., Suspicious activity, fraud detection, customer request, etc."
+        ></textarea>
+      </div>
+
+      <p class="warning-text">⚠️ This beneficiary will be marked as BLOCKED and cannot be used for transfers.</p>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-danger" (click)="confirmBlock()" [disabled]="actionInProgress()">
+        🚫 Confirm Block
+      </button>
+      <button class="btn btn-secondary" (click)="closeBlockModal()" [disabled]="actionInProgress()">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
