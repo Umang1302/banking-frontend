@@ -1,0 +1,129 @@
+<div class="upi-history-container">
+  <div class="page-header">
+    <h1>UPI Transaction History</h1>
+    <p>View your UPI payment transactions</p>
+  </div>
+
+  <div *ngIf="error()" class="alert alert-danger">{{ error() }}</div>
+
+  <!-- Filters -->
+  <div class="filters-card">
+    <div class="filters-grid">
+      <div class="filter-group">
+        <label>Account</label>
+        <select [(ngModel)]="selectedAccountNumber" (change)="onAccountChange()" class="form-control">
+          <option *ngFor="let account of accounts()" [value]="account.accountNumber">
+            {{ account.accountNumber }} - {{ account.accountType }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Status</label>
+        <select [(ngModel)]="statusFilter" class="form-control">
+          <option value="all">All Status</option>
+          <option value="settled">Settled</option>
+          <option value="initiated">Initiated</option>
+          <option value="failed">Failed</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Date</label>
+        <select [(ngModel)]="dateFilter" class="form-control">
+          <option value="all">All Time</option>
+          <option value="today">Today</option>
+          <option value="week">Last 7 Days</option>
+          <option value="month">Last 30 Days</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Search</label>
+        <input type="text" [(ngModel)]="searchTerm" placeholder="Search..." class="form-control">
+      </div>
+    </div>
+
+    <div class="filter-actions">
+      <button class="btn btn-secondary" (click)="exportToCSV()">Export CSV</button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading()" class="loading-card">
+    <div class="spinner-large"></div>
+    <p>Loading...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading() && getFilteredTransactions().length === 0" class="empty-state">
+    <h3>No transactions found</h3>
+    <p>You haven't made any UPI payments yet</p>
+  </div>
+
+  <!-- Transactions List -->
+  <div class="transactions-list">
+    <div *ngFor="let transaction of getFilteredTransactions()" class="transaction-card">
+      <div class="transaction-header" (click)="toggleTransaction(transaction.id)">
+        <div class="transaction-info">
+          <div class="transaction-amount">
+            <span class="amount">{{ formatAmount(transaction.amount) }}</span>
+            <span class="badge" [ngClass]="getStatusClass(transaction.status)">{{ transaction.status }}</span>
+          </div>
+          <div class="transaction-details">
+            <span class="receiver">To: {{ transaction.receiverName }}</span>
+            <span class="date">{{ formatDateTime(transaction.initiatedAt) }}</span>
+          </div>
+        </div>
+        <div class="transaction-toggle">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               [class.rotated]="expandedTransactionId() === transaction.id">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+      </div>
+
+      <div *ngIf="expandedTransactionId() === transaction.id" class="transaction-body">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">Transaction Reference</span>
+            <span class="value">{{ transaction.transactionReference }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Payment Type</span>
+            <span class="value">{{ transaction.paymentType }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Payer Account</span>
+            <span class="value">{{ transaction.payerAccountNumber }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Receiver Account</span>
+            <span class="value">{{ transaction.receiverAccountNumber }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Amount</span>
+            <span class="value">{{ formatAmount(transaction.amount) }}</span>
+          </div>
+          <div class="detail-item" *ngIf="transaction.description">
+            <span class="label">Description</span>
+            <span class="value">{{ transaction.description }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Initiated At</span>
+            <span class="value">{{ formatDateTime(transaction.initiatedAt) }}</span>
+          </div>
+          <div class="detail-item" *ngIf="transaction.settledAt">
+            <span class="label">Settled At</span>
+            <span class="value">{{ formatDateTime(transaction.settledAt) }}</span>
+          </div>
+          <div class="detail-item" *ngIf="transaction.failureReason">
+            <span class="label">Failure Reason</span>
+            <span class="value failure">{{ transaction.failureReason }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

@@ -102,9 +102,9 @@ export class BeneficiaryManagementComponent implements OnInit {
     // Verification filter
     const verificationFilter = this.verificationFilter();
     if (verificationFilter === 'VERIFIED') {
-      filtered = filtered.filter(b => b.isVerified === true);
+      filtered = filtered.filter(b => this.isBeneficiaryVerified(b));
     } else if (verificationFilter === 'PENDING') {
-      filtered = filtered.filter(b => b.isVerified === false || !b.isVerified);
+      filtered = filtered.filter(b => !this.isBeneficiaryVerified(b));
     }
     
     this.filteredBeneficiaries.set(filtered);
@@ -142,8 +142,13 @@ export class BeneficiaryManagementComponent implements OnInit {
     return status === 'ACTIVE' ? 'badge-success' : 'badge-secondary';
   }
 
-  getVerificationBadgeClass(isVerified: boolean): string {
-    return isVerified ? 'badge-success' : 'badge-warning';
+  // Helper to check if beneficiary is verified (supports both 'verified' and 'isVerified')
+  isBeneficiaryVerified(beneficiary: AdminBeneficiary): boolean {
+    return beneficiary.verified === true || beneficiary.isVerified === true;
+  }
+
+  getVerificationBadgeClass(beneficiary: AdminBeneficiary): string {
+    return this.isBeneficiaryVerified(beneficiary) ? 'badge-success' : 'badge-warning';
   }
 
   formatCurrency(amount: number): string {
@@ -183,11 +188,11 @@ export class BeneficiaryManagementComponent implements OnInit {
   }
 
   getVerifiedCount(): number {
-    return this.beneficiaries().filter(b => b.isVerified).length;
+    return this.beneficiaries().filter(b => this.isBeneficiaryVerified(b)).length;
   }
 
   getPendingCount(): number {
-    return this.beneficiaries().filter(b => !b.isVerified).length;
+    return this.beneficiaries().filter(b => !this.isBeneficiaryVerified(b)).length;
   }
 
   getActiveCount(): number {

@@ -55,7 +55,7 @@
       <tbody>
         <tr *ngFor="let txn of filteredTransactions()" (click)="viewTransactionDetails(txn.eftReference)">
           <td class="ref-cell">{{ txn.eftReference }}</td>
-          <td>{{ txn.sourceAccount?.customer?.firstName }} {{ txn.sourceAccount?.customer?.lastName }}</td>
+          <td>{{ txn.sourceAccount?.customer?.firstName || 'N/A' }} {{ txn.sourceAccount?.customer?.lastName || '' }}</td>
           <td>{{ txn.beneficiaryName }}</td>
           <td class="amount-cell">{{ formatCurrency(txn.amount) }}</td>
           <td>{{ formatCurrency(txn.charges) }}</td>

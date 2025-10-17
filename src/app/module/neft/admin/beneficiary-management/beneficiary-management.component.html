@@ -264,9 +264,9 @@
               </span>
             </td>
             <td>
-              <span class="verification-badge" [ngClass]="getVerificationBadgeClass(beneficiary.isVerified)">
-                <span *ngIf="beneficiary.isVerified">✓ Verified</span>
-                <span *ngIf="!beneficiary.isVerified">⏱ Pending</span>
+              <span class="verification-badge" [ngClass]="getVerificationBadgeClass(beneficiary)">
+                <span *ngIf="isBeneficiaryVerified(beneficiary)">✓ Verified</span>
+                <span *ngIf="!isBeneficiaryVerified(beneficiary)">⏱ Pending</span>
               </span>
             </td>
             <td>
@@ -450,9 +450,9 @@
           </div>
           <div class="detail-row">
             <span class="detail-label">Verification:</span>
-            <span class="verification-badge" [ngClass]="getVerificationBadgeClass(selectedBeneficiary()!.isVerified)">
-              <span *ngIf="selectedBeneficiary()!.isVerified">✓ Verified</span>
-              <span *ngIf="!selectedBeneficiary()!.isVerified">⏱ Pending Verification</span>
+            <span class="verification-badge" [ngClass]="getVerificationBadgeClass(selectedBeneficiary()!)">
+              <span *ngIf="isBeneficiaryVerified(selectedBeneficiary()!)">✓ Verified</span>
+              <span *ngIf="!isBeneficiaryVerified(selectedBeneficiary()!)">⏱ Pending Verification</span>
             </span>
           </div>
           <div class="detail-row">

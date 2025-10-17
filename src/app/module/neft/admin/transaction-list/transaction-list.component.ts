@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { NeftService } from '../../services/neft.service';
 import { AdminTransaction, StatisticsResponse } from '../../models/neft.models';
 
@@ -15,6 +15,7 @@ import { AdminTransaction, StatisticsResponse } from '../../models/neft.models';
 export class TransactionListComponent implements OnInit {
   private neftService = inject(NeftService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   transactions = signal<AdminTransaction[]>([]);
   filteredTransactions = signal<AdminTransaction[]>([]);
@@ -30,8 +31,16 @@ export class TransactionListComponent implements OnInit {
   dateFilter = signal('ALL');
 
   ngOnInit() {
-    this.loadTransactions();
-    this.loadStatistics();
+    // Check for query parameters and set initial filter
+    this.route.queryParams.subscribe(params => {
+      if (params['status']) {
+        const status = params['status'].toUpperCase();
+        this.statusFilter.set(status);
+        console.log('Status filter set from query params:', status);
+      }
+      this.loadTransactions();
+      this.loadStatistics();
+    });
   }
 
   loadTransactions() {

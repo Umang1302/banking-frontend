@@ -1,0 +1,86 @@
+<div *ngIf="isOpen" class="modal-overlay" (click)="onClose()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <!-- Success/Failure Icon -->
+    <div class="modal-icon" [class.success]="isSuccess" [class.failure]="!isSuccess">
+      <svg *ngIf="isSuccess" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+      <svg *ngIf="!isSuccess" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="15" y1="9" x2="9" y2="15"></line>
+        <line x1="9" y1="9" x2="15" y2="15"></line>
+      </svg>
+    </div>
+
+    <!-- Title -->
+    <h2 class="modal-title" [class.success-text]="isSuccess" [class.failure-text]="!isSuccess">
+      {{ title || (isSuccess ? 'Payment Successful!' : 'Payment Failed') }}
+    </h2>
+
+    <!-- Message -->
+    <p class="modal-message">{{ message }}</p>
+
+    <!-- Transaction Details (Success Only) -->
+    <div *ngIf="isSuccess && transactionReference" class="transaction-details">
+      <div class="detail-row">
+        <span class="detail-label">Transaction Reference:</span>
+        <span class="detail-value transaction-ref">{{ transactionReference }}</span>
+      </div>
+
+      <div class="detail-row">
+        <span class="detail-label">Payment Type:</span>
+        <span class="detail-value">{{ paymentType === 'QR' ? 'QR Code Payment' : 'UPI Payment' }}</span>
+      </div>
+
+      <div class="detail-row" *ngIf="receiverName">
+        <span class="detail-label">Paid To:</span>
+        <span class="detail-value">{{ receiverName }}</span>
+      </div>
+
+      <div class="detail-row">
+        <span class="detail-label">Amount:</span>
+        <span class="detail-value amount">{{ formatAmount(amount) }}</span>
+      </div>
+
+      <div class="detail-row" *ngIf="paidAt">
+        <span class="detail-label">Date & Time:</span>
+        <span class="detail-value">{{ formatDateTime(paidAt) }}</span>
+      </div>
+
+      <div class="detail-row" *ngIf="payerBalanceBefore">
+        <span class="detail-label">Balance Before:</span>
+        <span class="detail-value">{{ formatAmount(payerBalanceBefore) }}</span>
+      </div>
+
+      <div class="detail-row" *ngIf="payerBalanceAfter">
+        <span class="detail-label">Balance After:</span>
+        <span class="detail-value">{{ formatAmount(payerBalanceAfter) }}</span>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="modal-actions">
+      <button 
+        *ngIf="isSuccess" 
+        class="btn btn-secondary" 
+        (click)="onDownloadReceipt()">
+        Download Receipt
+      </button>
+      
+      <button 
+        *ngIf="isSuccess" 
+        class="btn btn-secondary" 
+        (click)="onViewTransaction()">
+        View Transaction
+      </button>
+      
+      <button 
+        class="btn btn-primary" 
+        (click)="onClose()">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+

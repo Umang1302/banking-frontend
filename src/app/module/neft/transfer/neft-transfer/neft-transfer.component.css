@@ -329,13 +329,24 @@
   gap: 1rem;
 }
 
-.beneficiary-card:hover {
+.beneficiary-card:hover:not(.disabled) {
   border-color: #B02A30;
 }
 
 .beneficiary-card.selected {
   border-color: #B02A30;
   background: #f0f7ff;
+}
+
+.beneficiary-card.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f5f5f5;
+  border-color: #d0d0d0;
+}
+
+.beneficiary-card.disabled:hover {
+  border-color: #d0d0d0;
 }
 
 .radio-indicator {
@@ -411,6 +422,22 @@
 .status-badge.verified {
   background: #d4edda;
   color: #155724;
+}
+
+.status-badge.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.pending-indicator {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: #ffc107;
+  color: #856404;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  font-weight: 600;
 }
 
 .last-used {

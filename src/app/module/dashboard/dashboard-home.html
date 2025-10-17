@@ -97,7 +97,6 @@
     <div class="quick-links-grid">
       <div 
         class="quick-link-card" 
-        [class.coming-soon]="link.action && (link.action === 'upi-coming-soon' || link.action === 'loan-coming-soon')"
         *ngFor="let link of quickLinks" 
         (click)="onQuickLinkClick(link)">
         <div class="quick-link-icon" style="font-style: normal !important;">{{ link.icon }}</div>

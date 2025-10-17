@@ -30,11 +30,12 @@ export class AdminRtgsTransactionListComponent implements OnInit {
     // Check query params for status filter
     this.route.queryParams.subscribe(params => {
       if (params['status']) {
-        this.statusFilter.set(params['status']);
+        const status = params['status'].toUpperCase();
+        this.statusFilter.set(status);
+        console.log('RTGS Status filter set from query params:', status);
       }
+      this.loadTransactions();
     });
-
-    this.loadTransactions();
   }
 
   loadTransactions() {
@@ -60,15 +61,21 @@ export class AdminRtgsTransactionListComponent implements OnInit {
   applyFilters() {
     let filtered = [...this.transactions()];
     
+    // Search filter
     const search = this.searchTerm().toLowerCase();
     if (search) {
       filtered = filtered.filter(t =>
         t.eftReference.toLowerCase().includes(search) ||
         t.beneficiaryName.toLowerCase().includes(search) ||
-        t.sourceAccount.customer.firstName.toLowerCase().includes(search) ||
-        t.sourceAccount.customer.lastName.toLowerCase().includes(search) ||
+        t.sourceAccount?.customer?.firstName?.toLowerCase().includes(search) ||
+        t.sourceAccount?.customer?.lastName?.toLowerCase().includes(search) ||
         t.amount.toString().includes(search)
       );
+    }
+    
+    // Status filter - applied locally in addition to API level filtering
+    if (this.statusFilter() !== 'ALL') {
+      filtered = filtered.filter(t => t.status === this.statusFilter());
     }
     
     this.filteredTransactions.set(filtered);

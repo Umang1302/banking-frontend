@@ -51,7 +51,25 @@ export class AdminRtgsDashboardComponent implements OnInit {
   }
 
   navigateTo(route: string) {
-    this.router.navigate([route]);
+    // Parse query parameters if present
+    const [path, queryString] = route.split('?');
+    
+    if (queryString) {
+      // Parse query parameters
+      const queryParams: { [key: string]: string } = {};
+      queryString.split('&').forEach(param => {
+        const [key, value] = param.split('=');
+        if (key && value) {
+          queryParams[key] = value;
+        }
+      });
+      
+      // Navigate with query parameters
+      this.router.navigate([path], { queryParams });
+    } else {
+      // Navigate without query parameters
+      this.router.navigate([route]);
+    }
   }
 
   formatCurrency(amount: number): string {

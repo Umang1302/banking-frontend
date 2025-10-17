@@ -11,8 +11,12 @@ export interface Beneficiary {
   branchName?: string;
   accountType: string;
   nickName?: string;
-  status: 'ACTIVE' | 'INACTIVE' | 'BLOCKED';
+  status: 'ACTIVE' | 'INACTIVE' | 'BLOCKED' | 'PENDING_VERIFICATION';
+  verified?: boolean; // API uses 'verified' not 'isVerified'
+  isVerified?: boolean; // Legacy field for backward compatibility
   addedOn?: string;
+  createdAt?: string;
+  lastUsedAt?: string | null;
 }
 
 export interface Account {

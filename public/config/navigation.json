@@ -23,6 +23,7 @@
       "icon": "📋",
       "roles": ["customer", "accountant"],
       "order": 5,
+      "hidden": true,
       "children": [
         {
           "id": "transaction-history",
@@ -104,6 +105,68 @@
           "id": "rtgs-history",
           "label": "Transfer History",
           "routerLink": "/dashboard/rtgs/history",
+          "icon": "📜",
+          "roles": ["customer"]
+        }
+      ]
+    },
+    {
+      "id": "qr-payment",
+      "label": "QR Payments",
+      "routerLink": "/dashboard/qr-payment/generate",
+      "icon": "📱",
+      "roles": ["customer"],
+      "order": 8,
+      "children": [
+        {
+          "id": "qr-generate",
+          "label": "Generate QR Code",
+          "routerLink": "/dashboard/qr-payment/generate",
+          "icon": "📲",
+          "roles": ["customer"]
+        },
+        {
+          "id": "qr-scan",
+          "label": "Pay via QR Code",
+          "routerLink": "/dashboard/qr-payment/scan",
+          "icon": "📷",
+          "roles": ["customer"]
+        },
+        {
+          "id": "qr-history",
+          "label": "QR Payment History",
+          "routerLink": "/dashboard/qr-payment/history",
+          "icon": "📜",
+          "roles": ["customer"]
+        }
+      ]
+    },
+    {
+      "id": "upi-payment",
+      "label": "UPI Payments",
+      "routerLink": "/dashboard/upi-payment/pay",
+      "icon": "💰",
+      "roles": ["customer"],
+      "order": 9,
+      "children": [
+        {
+          "id": "upi-manage",
+          "label": "Manage UPI IDs",
+          "routerLink": "/dashboard/upi-payment/manage",
+          "icon": "🔧",
+          "roles": ["customer"]
+        },
+        {
+          "id": "upi-pay",
+          "label": "Make UPI Payment",
+          "routerLink": "/dashboard/upi-payment/pay",
+          "icon": "💳",
+          "roles": ["customer"]
+        },
+        {
+          "id": "upi-history",
+          "label": "UPI Payment History",
+          "routerLink": "/dashboard/upi-payment/history",
           "icon": "📜",
           "roles": ["customer"]
         }

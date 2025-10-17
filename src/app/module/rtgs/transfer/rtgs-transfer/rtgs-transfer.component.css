@@ -385,7 +385,7 @@
   gap: 1rem;
 }
 
-.beneficiary-card:hover {
+.beneficiary-card:hover:not(.disabled) {
   border-color: #ff6b35;
   box-shadow: 0 2px 8px rgba(255, 107, 53, 0.15);
 }
@@ -394,6 +394,18 @@
   border-color: #ff6b35;
   background: #fff9f5;
   box-shadow: 0 4px 12px rgba(255, 107, 53, 0.2);
+}
+
+.beneficiary-card.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f5f5f5;
+  border-color: #d0d0d0;
+}
+
+.beneficiary-card.disabled:hover {
+  border-color: #d0d0d0;
+  box-shadow: none;
 }
 
 .radio-indicator {
@@ -462,6 +474,36 @@
 .ifsc-code {
   color: #666;
   font-family: 'Courier New', monospace;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-weight: 500;
+  background: #fff3cd;
+  color: #856404;
+  font-size: 0.75rem;
+}
+
+.status-badge.verified {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-badge.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.pending-indicator {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: #ffc107;
+  color: #856404;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  font-weight: 600;
 }
 
 /* Selected Summary */

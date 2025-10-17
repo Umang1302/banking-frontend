@@ -99,16 +99,15 @@ export class NeftTransferComponent implements OnInit {
           };
         });
         
-        // Filter out BLOCKED beneficiaries - they cannot be used for transfers
-        const activeBeneficiaries = mappedBeneficiaries.filter(b => b.status !== 'BLOCKED');
+        // Keep all beneficiaries for display (including pending)
+        // But we'll disable selection for non-active ones in the UI
+        this.beneficiaries.set(mappedBeneficiaries);
+        this.filteredBeneficiaries.set(mappedBeneficiaries);
         
-        this.beneficiaries.set(activeBeneficiaries);
-        this.filteredBeneficiaries.set(activeBeneficiaries);
-        
-        // Pre-select beneficiary if ID was passed
+        // Pre-select beneficiary if ID was passed AND it's selectable
         if (preSelectId) {
-          const beneficiary = activeBeneficiaries.find(b => String(b.id) === String(preSelectId));
-          if (beneficiary) {
+          const beneficiary = mappedBeneficiaries.find(b => String(b.id) === String(preSelectId));
+          if (beneficiary && this.canBeneficiaryBeSelected(beneficiary)) {
             this.selectBeneficiary(beneficiary);
           }
         }
@@ -147,7 +146,17 @@ export class NeftTransferComponent implements OnInit {
   }
 
   selectBeneficiary(beneficiary: Beneficiary) {
-    this.selectedBeneficiary.set(beneficiary);
+    // Only allow selection of active and verified beneficiaries
+    if (this.canBeneficiaryBeSelected(beneficiary)) {
+      this.selectedBeneficiary.set(beneficiary);
+    }
+  }
+
+  canBeneficiaryBeSelected(beneficiary: Beneficiary): boolean {
+    // Beneficiary must be ACTIVE status and verified to be selected for transfer
+    // BLOCKED, INACTIVE, or unverified beneficiaries cannot be selected
+    // Check both 'verified' and 'isVerified' for backward compatibility
+    return beneficiary.status === 'ACTIVE' && (beneficiary.verified === true || beneficiary.isVerified === true);
   }
 
   isBeneficiarySelected(beneficiary: Beneficiary): boolean {

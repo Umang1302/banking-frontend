@@ -33,6 +33,20 @@ export class DashboardHomeComponent implements OnInit {
   // Banking Quick Links
   quickLinks: QuickLink[] = [
     {
+      id: 'qr-payment',
+      title: 'QR Payments',
+      description: 'Generate or scan QR codes for instant payments',
+      icon: '📱',
+      route: '/dashboard/qr-payment/generate'
+    },
+    {
+      id: 'upi-payments',
+      title: 'UPI Payments',
+      description: 'Pay instantly using UPI',
+      icon: '💰',
+      route: '/dashboard/upi-payment/pay'
+    },
+    {
       id: 'neft-transfer',
       title: 'NEFT Transfer',
       description: 'Send money to any bank account',
@@ -40,11 +54,11 @@ export class DashboardHomeComponent implements OnInit {
       route: '/dashboard/neft/transfer'
     },
     {
-      id: 'new-transaction',
-      title: 'New Transaction',
-      description: 'Create a new banking transaction',
-      icon: '💳',
-      route: '/dashboard/transactions/create'
+      id: 'rtgs-transfer',
+      title: 'RTGS Transfer',
+      description: 'High-value instant transfers',
+      icon: '⚡',
+      route: '/dashboard/rtgs/transfer'
     },
     {
       id: 'beneficiaries',
@@ -54,13 +68,6 @@ export class DashboardHomeComponent implements OnInit {
       route: '/dashboard/neft/beneficiaries'
     },
     {
-      id: 'view-statements',
-      title: 'View Statements',
-      description: 'Download your account statements',
-      icon: '📄',
-      route: '/dashboard/transactions/statements'
-    },
-    {
       id: 'transaction-history',
       title: 'Transaction History',
       description: 'View all your transactions',
@@ -68,31 +75,25 @@ export class DashboardHomeComponent implements OnInit {
       route: '/dashboard/transactions/history'
     },
     {
-      id: 'upi-payments',
-      title: 'UPI Payments',
-      description: 'Quick UPI payments (Coming Soon)',
-      icon: '📱',
-      action: 'upi-coming-soon'
+      id: 'new-transaction',
+      title: 'New Transaction',
+      description: 'Create a new banking transaction',
+      icon: '💳',
+      route: '/dashboard/transactions/create'
     },
     {
-      id: 'apply-loan',
-      title: 'Apply for Loan',
-      description: 'Explore loan options (Coming Soon)',
-      icon: '🏦',
-      action: 'loan-coming-soon'
+      id: 'view-statements',
+      title: 'View Statements',
+      description: 'Download your account statements',
+      icon: '📄',
+      route: '/dashboard/transactions/statements'
     }
-    // ,
-    // {
-    //   id: 'bulk-upload',
-    //   title: 'Bulk Upload',
-    //   description: 'Upload multiple transactions',
-    //   icon: '📤',
-    //   route: '/dashboard/transactions/bulk-upload'
-    // }
   ];
 
   ngOnInit(): void {
     console.log('Dashboard Home component initialized');
+    // Refresh user data when dashboard loads
+    this.userService.loadProfile();
   }
 
   navigateToProfile(): void {
@@ -118,7 +119,9 @@ export class DashboardHomeComponent implements OnInit {
       return [];
     }
     return accounts.filter(account => 
-      account.accountType === 'SAVINGS' || account.accountType === 'CURRENT'
+      account.accountType === 'SAVINGS' || 
+      account.accountType === 'CURRENT' || 
+      account.accountType === 'FIXED_DEPOSIT'
     );
   }
 
@@ -127,7 +130,8 @@ export class DashboardHomeComponent implements OnInit {
       'SAVINGS': '💰',
       'CURRENT': '💼',
       'CREDIT': '💳',
-      'LOAN': '🏦'
+      'LOAN': '🏦',
+      'FIXED_DEPOSIT': '🏛️'
     };
     return icons[accountType] || '💳';
   }
@@ -137,27 +141,32 @@ export class DashboardHomeComponent implements OnInit {
       'SAVINGS': 'Savings Account',
       'CURRENT': 'Current Account',
       'CREDIT': 'Credit Card',
-      'LOAN': 'Loan Account'
+      'LOAN': 'Loan Account',
+      'FIXED_DEPOSIT': 'Fixed Deposit'
     };
     return displays[accountType] || accountType;
   }
 
   onQuickLinkClick(link: QuickLink): void {
     console.log('Quick link clicked:', link);
+    console.log('Link route:', link.route);
+    console.log('Router:', this.router);
+    
     if (link.route) {
-      this.router.navigate([link.route]);
+      console.log('Navigating to:', link.route);
+      this.router.navigate([link.route]).then(
+        (success) => {
+          console.log('Navigation successful:', success);
+        },
+        (error) => {
+          console.error('Navigation failed:', error);
+        }
+      );
     } else if (link.action) {
       // Handle specific actions
-      switch (link.action) {
-        case 'upi-coming-soon':
-          alert('🚀 UPI Payments feature coming soon! Stay tuned for quick and easy payments.');
-          break;
-        case 'loan-coming-soon':
-          alert('🏦 Loan application feature coming soon! We\'ll notify you when it\'s available.');
-          break;
-        default:
-          console.log('Action not implemented:', link.action);
-      }
+      console.log('Action not implemented:', link.action);
+    } else {
+      console.warn('No route or action defined for link:', link);
     }
   }
 

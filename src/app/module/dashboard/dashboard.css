@@ -616,6 +616,7 @@
   align-items: center;
   justify-content: center;
   width: 60px;
+  pointer-events: none;
   height: 60px;
   background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
   border-radius: 50%;
@@ -626,6 +627,7 @@
 
 .quick-link-content {
   flex: 1;
+  pointer-events: none;
 }
 
 .quick-link-title {
@@ -647,6 +649,7 @@
   color: var(--text-secondary);
   transition: all var(--transition-fast);
   flex-shrink: 0;
+  pointer-events: none;
 }
 
 /* Coming Soon Badge Styling */

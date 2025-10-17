@@ -13,8 +13,9 @@ export interface Beneficiary {
   nickname?: string;
   email?: string; // Optional email field (API accepts this)
   mobile?: string; // Optional mobile field (API accepts 10-15 digits with optional +)
-  status: 'ACTIVE' | 'INACTIVE' | 'BLOCKED';
-  isVerified?: boolean; // Verification status from API
+  status: 'ACTIVE' | 'INACTIVE' | 'BLOCKED' | 'PENDING_VERIFICATION';
+  verified?: boolean; // API uses 'verified' not 'isVerified'
+  isVerified?: boolean; // Legacy field for backward compatibility
   createdAt: string;
   lastUsedAt: string | null;
 }
@@ -354,7 +355,8 @@ export interface AdminBeneficiary {
   accountType: string;
   nickname: string;
   status: string;
-  isVerified: boolean; // Verification status
+  verified?: boolean; // API uses 'verified' not 'isVerified'
+  isVerified?: boolean; // Legacy field for backward compatibility
   customerId: number;
   customerName: string;
   createdAt: string;
@@ -378,7 +380,8 @@ export interface PendingBeneficiary {
   nickname: string;
   email: string | null;
   mobile: string | null;
-  isVerified: boolean;
+  verified?: boolean; // API uses 'verified' not 'isVerified'
+  isVerified?: boolean; // Legacy field for backward compatibility
   status: string; // PENDING_VERIFICATION
   lastUsedAt: string | null;
   createdAt: string;

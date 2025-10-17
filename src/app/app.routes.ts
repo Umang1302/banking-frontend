@@ -113,6 +113,58 @@ export const routes: Routes = [
         ]
       },
       {
+        path: 'qr-payment',
+        canActivate: [rootGuard],
+        children: [
+          {
+            path: '',
+            redirectTo: 'generate',
+            pathMatch: 'full'
+          },
+          {
+            path: 'generate',
+            loadComponent: () => import('./module/qr-payment/qr-generate/qr-generate.component').then(m => m.QRGenerateComponent),
+            canActivate: [rootGuard, roleGuard]
+          },
+          {
+            path: 'scan',
+            loadComponent: () => import('./module/qr-payment/qr-scanner/qr-scanner.component').then(m => m.QRScannerComponent),
+            canActivate: [rootGuard, roleGuard]
+          },
+          {
+            path: 'history',
+            loadComponent: () => import('./module/qr-payment/qr-history/qr-history.component').then(m => m.QRHistoryComponent),
+            canActivate: [rootGuard, roleGuard]
+          }
+        ]
+      },
+      {
+        path: 'upi-payment',
+        canActivate: [rootGuard],
+        children: [
+          {
+            path: '',
+            redirectTo: 'pay',
+            pathMatch: 'full'
+          },
+          {
+            path: 'manage',
+            loadComponent: () => import('./module/upi-payment/upi-management/upi-management.component').then(m => m.UPIManagementComponent),
+            canActivate: [rootGuard, roleGuard]
+          },
+          {
+            path: 'pay',
+            loadComponent: () => import('./module/upi-payment/upi-payment/upi-payment.component').then(m => m.UPIPaymentComponent),
+            canActivate: [rootGuard, roleGuard]
+          },
+          {
+            path: 'history',
+            loadComponent: () => import('./module/upi-payment/upi-history/upi-history.component').then(m => m.UPIHistoryComponent),
+            canActivate: [rootGuard, roleGuard]
+          }
+        ]
+      },
+      {
         path: 'admin-neft',
         canActivate: [rootGuard],
         children: [

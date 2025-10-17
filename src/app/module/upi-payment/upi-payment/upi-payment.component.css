@@ -1,0 +1,257 @@
+.upi-payment-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.page-header {
+  margin-bottom: 32px;
+}
+
+.page-header h1 {
+  font-size: 28px;
+  font-weight: 600;
+  color: #212529;
+  margin-bottom: 8px;
+}
+
+.page-header p {
+  color: #6c757d;
+  font-size: 15px;
+}
+
+/* Alerts */
+.alert {
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: slideDown 0.3s ease;
+}
+
+.alert svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-card {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.form-card h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #495057;
+  margin-bottom: 8px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 15px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #3399cc;
+  box-shadow: 0 0 0 3px rgba(51, 153, 204, 0.1);
+}
+
+.input-with-validation {
+  position: relative;
+}
+
+.validation-icon {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 18px;
+}
+
+.validation-icon.success {
+  color: #28a745;
+}
+
+.validation-icon.error {
+  color: #dc3545;
+}
+
+.form-control.valid {
+  border-color: #28a745;
+}
+
+.form-control.invalid {
+  border-color: #dc3545;
+}
+
+.form-text {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  color: #6c757d;
+}
+
+.form-text.error {
+  color: #dc3545;
+}
+
+.quick-amounts {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.quick-amount-btn {
+  padding: 8px 16px;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.quick-amount-btn:hover {
+  border-color: #3399cc;
+  color: #3399cc;
+  background-color: #f0f8ff;
+}
+
+.account-summary {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.account-summary h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  font-size: 14px;
+}
+
+.summary-row.total {
+  border-top: 2px solid #dee2e6;
+  margin-top: 8px;
+  padding-top: 12px;
+  font-size: 16px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background-color: #3399cc;
+  color: white;
+  flex: 1;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #2a7aa8;
+}
+
+.btn-primary:disabled {
+  background-color: #a0c4d9;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background-color: white;
+  color: #3399cc;
+  border: 1px solid #3399cc;
+}
+
+@media (max-width: 768px) {
+  .upi-payment-container {
+    padding: 16px;
+  }
+
+  .form-card {
+    padding: 24px 20px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .quick-amounts {
+    justify-content: space-between;
+  }
+
+  .quick-amount-btn {
+    flex: 1;
+  }
+
+  .summary-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+

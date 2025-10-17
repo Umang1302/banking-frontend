@@ -11,6 +11,7 @@ export interface NavigationItem {
   roles: string[];
   order?: number;
   isActive?: boolean;
+  hidden?: boolean; // New property to hide from menu display
   children?: NavigationItem[];
 }
 
@@ -57,6 +58,8 @@ export class NavigationService {
       map(() => {
         const filteredItems = this.navigationConfig.items
           .filter(item => {
+            // Filter out hidden items from menu display
+            if (item.hidden === true) return false;
             // If roles array is empty, allow all roles
             if (item.roles.length === 0) return true;
             // Otherwise check if user role is in the allowed roles
@@ -66,6 +69,8 @@ export class NavigationService {
             // If item has children, filter them based on user role as well
             if (item.children && item.children.length > 0) {
               const filteredChildren = item.children.filter(child => {
+                // Filter out hidden children from menu display
+                if (child.hidden === true) return false;
                 // If roles array is empty, allow all roles
                 if (child.roles.length === 0) return true;
                 // Otherwise check if user role is in the allowed roles

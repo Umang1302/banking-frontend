@@ -145,7 +145,7 @@
             <div class="txn-info">
               <div class="txn-ref">{{ txn.eftReference }}</div>
               <div class="txn-details">
-                <span>{{ txn.sourceAccount?.customer?.firstName }} {{ txn.sourceAccount?.customer?.lastName }}</span>
+                <span>{{ txn.sourceAccount?.customer?.firstName || 'N/A' }} {{ txn.sourceAccount?.customer?.lastName || '' }}</span>
                 <span class="separator">→</span>
                 <span>{{ txn.beneficiaryName }}</span>
               </div>
@@ -178,7 +178,7 @@
             <div class="txn-info">
               <div class="txn-ref">{{ txn.eftReference }}</div>
               <div class="txn-details">
-                <span>{{ txn.sourceAccount?.customer?.firstName }} {{ txn.sourceAccount?.customer?.lastName }}</span>
+                <span>{{ txn.sourceAccount?.customer?.firstName || 'N/A' }} {{ txn.sourceAccount?.customer?.lastName || '' }}</span>
                 <span class="separator">→</span>
                 <span>{{ txn.beneficiaryName }}</span>
               </div>

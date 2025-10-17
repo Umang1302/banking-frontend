@@ -1,0 +1,269 @@
+<div class="qr-history-container">
+  <div class="page-header">
+    <h1>QR Payment History</h1>
+    <p>View your QR payment transactions and requests</p>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error()" class="alert alert-danger">
+    {{ error() }}
+  </div>
+
+  <!-- View Mode Tabs -->
+  <div class="view-tabs">
+    <button 
+      class="tab-btn"
+      [class.active]="viewMode() === 'transactions'"
+      (click)="switchView('transactions')">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="1" x2="12" y2="23"></line>
+        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+      </svg>
+      Transactions
+    </button>
+    <button 
+      class="tab-btn"
+      [class.active]="viewMode() === 'requests'"
+      (click)="switchView('requests')">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7"></rect>
+        <rect x="14" y="3" width="7" height="7"></rect>
+        <rect x="14" y="14" width="7" height="7"></rect>
+        <rect x="3" y="14" width="7" height="7"></rect>
+      </svg>
+      My QR Requests
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-card">
+    <div class="filters-grid">
+      <!-- Account Selection (Transactions only) -->
+      <div *ngIf="viewMode() === 'transactions'" class="filter-group">
+        <label>Account</label>
+        <select [(ngModel)]="selectedAccountNumber" (change)="onAccountChange()" class="form-control">
+          <option *ngFor="let account of accounts()" [value]="account.accountNumber">
+            {{ account.accountNumber }} - {{ account.accountType }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Status Filter -->
+      <div class="filter-group">
+        <label>Status</label>
+        <select [(ngModel)]="statusFilter" class="form-control">
+          <option value="all">All Status</option>
+          <option value="settled">Settled</option>
+          <option value="initiated">Initiated</option>
+          <option value="failed">Failed</option>
+          <option value="created">Created</option>
+          <option value="paid">Paid</option>
+          <option value="expired">Expired</option>
+        </select>
+      </div>
+
+      <!-- Date Filter -->
+      <div class="filter-group">
+        <label>Date</label>
+        <select [(ngModel)]="dateFilter" class="form-control">
+          <option value="all">All Time</option>
+          <option value="today">Today</option>
+          <option value="week">Last 7 Days</option>
+          <option value="month">Last 30 Days</option>
+        </select>
+      </div>
+
+      <!-- Search -->
+      <div class="filter-group">
+        <label>Search</label>
+        <input 
+          type="text" 
+          [(ngModel)]="searchTerm" 
+          placeholder="Search transactions..."
+          class="form-control">
+      </div>
+    </div>
+
+    <div class="filter-actions">
+      <button class="btn btn-secondary" (click)="exportToCSV()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Export CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="loading-card">
+    <div class="spinner-large"></div>
+    <p>Loading...</p>
+  </div>
+
+  <!-- Transactions View -->
+  <div *ngIf="!loading() && viewMode() === 'transactions'">
+    <div *ngIf="getFilteredTransactions().length === 0" class="empty-state">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <h3>No transactions found</h3>
+      <p>You haven't made any QR payments yet</p>
+    </div>
+
+    <div class="transactions-list">
+      <div *ngFor="let transaction of getFilteredTransactions()" class="transaction-card">
+        <div class="transaction-header" (click)="toggleTransaction(transaction.id)">
+          <div class="transaction-info">
+            <div class="transaction-amount">
+              <span class="amount">{{ formatAmount(transaction.amount) }}</span>
+              <span class="badge" [ngClass]="getStatusClass(transaction.status)">
+                {{ transaction.status }}
+              </span>
+            </div>
+            <div class="transaction-details">
+              <span class="receiver">To: {{ transaction.receiverName }}</span>
+              <span class="date">{{ formatDateTime(transaction.initiatedAt) }}</span>
+            </div>
+          </div>
+          <div class="transaction-toggle">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 [class.rotated]="expandedTransactionId() === transaction.id">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Expanded Details -->
+        <div *ngIf="expandedTransactionId() === transaction.id" class="transaction-body">
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="label">Transaction Reference</span>
+              <span class="value">{{ transaction.transactionReference }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Payment Type</span>
+              <span class="value">{{ transaction.paymentType }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Payer Account</span>
+              <span class="value">{{ transaction.payerAccountNumber }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Receiver Account</span>
+              <span class="value">{{ transaction.receiverAccountNumber }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Receiver Name</span>
+              <span class="value">{{ transaction.receiverName }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Amount</span>
+              <span class="value">{{ formatAmount(transaction.amount) }}</span>
+            </div>
+            <div class="detail-item" *ngIf="transaction.razorpayFee > 0">
+              <span class="label">Transaction Fee</span>
+              <span class="value">{{ formatAmount(transaction.razorpayFee) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Net Amount</span>
+              <span class="value">{{ formatAmount(transaction.netAmount) }}</span>
+            </div>
+            <div class="detail-item" *ngIf="transaction.description">
+              <span class="label">Description</span>
+              <span class="value">{{ transaction.description }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Payment Method</span>
+              <span class="value">{{ transaction.paymentMethod }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Initiated By</span>
+              <span class="value">{{ transaction.initiatedBy }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Initiated At</span>
+              <span class="value">{{ formatDateTime(transaction.initiatedAt) }}</span>
+            </div>
+            <div class="detail-item" *ngIf="transaction.settledAt">
+              <span class="label">Settled At</span>
+              <span class="value">{{ formatDateTime(transaction.settledAt) }}</span>
+            </div>
+            <div class="detail-item" *ngIf="transaction.failureReason">
+              <span class="label">Failure Reason</span>
+              <span class="value failure">{{ transaction.failureReason }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- My Requests View -->
+  <div *ngIf="!loading() && viewMode() === 'requests'">
+    <div *ngIf="getFilteredRequests().length === 0" class="empty-state">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7"></rect>
+        <rect x="14" y="3" width="7" height="7"></rect>
+        <rect x="14" y="14" width="7" height="7"></rect>
+        <rect x="3" y="14" width="7" height="7"></rect>
+      </svg>
+      <h3>No QR requests found</h3>
+      <p>You haven't generated any QR codes yet</p>
+    </div>
+
+    <div class="requests-grid">
+      <div *ngFor="let request of getFilteredRequests()" class="request-card">
+        <div class="request-qr">
+          <img [src]="'data:image/png;base64,' + request.qrCodeData" alt="QR Code">
+        </div>
+        <div class="request-details">
+          <div class="request-amount">
+            <span class="amount">{{ formatAmount(request.amount) }}</span>
+            <span class="badge" [ngClass]="getStatusClass(request.status)">
+              {{ request.status }}
+            </span>
+          </div>
+          <div class="request-info">
+            <div class="info-row">
+              <span>Request ID:</span>
+              <strong>{{ request.requestId }}</strong>
+            </div>
+            <div class="info-row">
+              <span>Account:</span>
+              <strong>{{ request.accountNumber }}</strong>
+            </div>
+            <div class="info-row" *ngIf="request.description">
+              <span>Description:</span>
+              <strong>{{ request.description }}</strong>
+            </div>
+            <div class="info-row">
+              <span>Created:</span>
+              <strong>{{ formatDateTime(request.createdAt) }}</strong>
+            </div>
+            <div class="info-row">
+              <span>Expires:</span>
+              <strong [class.expired]="request.isExpired">
+                {{ formatDateTime(request.expiresAt) }}
+              </strong>
+            </div>
+          </div>
+          <button 
+            class="btn btn-primary btn-sm"
+            (click)="downloadQRCode(request)">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Download QR
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

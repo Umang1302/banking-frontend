@@ -1,0 +1,144 @@
+<div class="upi-management-container">
+  <div class="page-header">
+    <h1>Manage UPI IDs</h1>
+    <p>Register and manage your UPI IDs for quick payments</p>
+    <button class="btn btn-primary" (click)="toggleAddForm()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      Add UPI ID
+    </button>
+  </div>
+
+  <!-- Alerts -->
+  <div *ngIf="error()" class="alert alert-danger">{{ error() }}</div>
+  <div *ngIf="success()" class="alert alert-success">{{ success() }}</div>
+
+  <!-- Add UPI Form -->
+  <div *ngIf="showAddForm()" class="form-card">
+    <h2>Register New UPI ID</h2>
+    <div class="form-group">
+      <label>UPI ID *</label>
+      <input 
+        type="text" 
+        [(ngModel)]="newUPIId" 
+        placeholder="username@provider (e.g., john@paytm)"
+        class="form-control">
+      <small class="form-text">Enter your UPI ID in format: username@provider</small>
+    </div>
+
+    <div class="form-group">
+      <label>Link to Account *</label>
+      <select [(ngModel)]="selectedAccountNumber" class="form-control">
+        <option value="">Select an account</option>
+        <option *ngFor="let account of accounts()" [value]="account.accountNumber">
+          {{ account.accountNumber }} - {{ account.accountType }}
+        </option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="checkbox-label">
+        <input type="checkbox" [(ngModel)]="isPrimary">
+        <span>Set as primary UPI ID</span>
+      </label>
+      <div *ngIf="hasPrimaryUPI" class="primary-info-message">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span>
+          <strong>{{ primaryUPIAccount?.upiId }}</strong> is currently set as primary.
+          <span *ngIf="isPrimary()"> Checking this will replace it as primary.</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-secondary" (click)="toggleAddForm()">Cancel</button>
+      <button class="btn btn-primary" (click)="registerUPI()" [disabled]="submitting()">
+        <span *ngIf="!submitting()">Register UPI ID</span>
+        <span *ngIf="submitting()">Registering...</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- UPI Accounts List -->
+  <div *ngIf="loading()" class="loading-card">
+    <div class="spinner-large"></div>
+    <p>Loading...</p>
+  </div>
+
+  <div *ngIf="!loading() && upiAccounts().length === 0 && !showAddForm()" class="empty-state">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+      <line x1="1" y1="10" x2="23" y2="10"></line>
+    </svg>
+    <h3>No UPI IDs registered</h3>
+    <p>Add your first UPI ID to start making quick payments</p>
+    <button class="btn btn-primary" (click)="toggleAddForm()">Add UPI ID</button>
+  </div>
+
+  <div class="upi-list">
+    <div *ngFor="let upi of upiAccounts()" class="upi-card">
+      <div class="upi-icon" [style.background-color]="getProviderColor(upi.upiProvider)">
+        <span>{{ getProviderIcon(upi.upiProvider) }}</span>
+      </div>
+      
+      <div class="upi-info">
+        <div class="upi-header">
+          <h3>{{ upi.upiId }}</h3>
+          <div class="upi-badges">
+            <span *ngIf="upi.primary" class="badge badge-primary">Primary</span>
+            <span class="badge" [ngClass]="'badge-' + upi.status.toLowerCase()">{{ upi.status }}</span>
+            <span *ngIf="upi.verified" class="badge badge-verified">✓ Verified</span>
+          </div>
+        </div>
+
+        <div class="upi-details">
+          <div class="detail-row">
+            <span>Provider:</span>
+            <strong>{{ upi.upiProvider }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>Linked Account:</span>
+            <strong>{{ upi.accountNumber }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>Account Type:</span>
+            <strong>{{ getAccountType(upi.accountNumber) }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>Verified At:</span>
+            <strong>{{ formatDateTime(upi.verifiedAt) }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>Last Used:</span>
+            <strong>{{ formatDateTime(upi.lastUsedAt) }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>Created:</span>
+            <strong>{{ formatDateTime(upi.createdAt) }}</strong>
+          </div>
+        </div>
+
+        <div class="upi-actions">
+          <button 
+            *ngIf="!upi.primary && upi.status === 'ACTIVE'"
+            class="btn btn-sm btn-secondary"
+            (click)="setPrimary(upi.upiId)">
+            Set as Primary
+          </button>
+          <button 
+            class="btn btn-sm btn-danger"
+            (click)="deactivateUPI(upi.upiId)">
+            Deactivate
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

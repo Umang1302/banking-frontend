@@ -107,6 +107,8 @@
       <div *ngFor="let beneficiary of filteredBeneficiaries(); trackBy: trackByBeneficiaryId"
            class="beneficiary-card"
            [class.selected]="isBeneficiarySelected(beneficiary)"
+           [class.disabled]="!canBeneficiaryBeSelected(beneficiary)"
+           [attr.title]="!canBeneficiaryBeSelected(beneficiary) ? 'This beneficiary is pending verification and cannot be used for transfers' : ''"
            (click)="selectBeneficiary(beneficiary)">
         <div class="radio-indicator">
           <div class="radio-circle"></div>
@@ -115,6 +117,7 @@
           <div class="beneficiary-name">
             {{ beneficiary.beneficiaryName }}
             <span *ngIf="beneficiary.nickName" class="nickname">({{ beneficiary.nickName }})</span>
+            <span *ngIf="!canBeneficiaryBeSelected(beneficiary)" class="pending-indicator">🔒 Pending Approval</span>
           </div>
           <div class="beneficiary-details">
             <span>{{ beneficiary.bankName }}</span>
@@ -122,6 +125,9 @@
             <span>{{ maskAccountNumber(beneficiary.accountNumber) }}</span>
           </div>
           <div class="beneficiary-meta">
+            <span class="status-badge" [class.verified]="beneficiary.verified === true" [class.pending]="beneficiary.verified !== true">
+              {{ beneficiary.verified === true ? '✓ Verified' : '⏱ Pending Verification' }}
+            </span>
             <span class="ifsc-code">IFSC: {{ beneficiary.ifscCode }}</span>
           </div>
         </div>
