@@ -1,0 +1,178 @@
+<div class="bulk-upload-tab">
+  <div class="upload-header">
+    <h3>📤 Bulk Transaction Upload</h3>
+    <p>Upload multiple transactions at once using a CSV file</p>
+  </div>
+  
+  <!-- Instructions -->
+  <div class="upload-instructions">
+    <h4>Instructions:</h4>
+    <ol>
+      <li>Download the CSV template below</li>
+      <li>Fill in transaction details (one transaction per row)</li>
+      <li>Upload the completed CSV file</li>
+      <li>Review the results and check for any errors</li>
+    </ol>
+    
+    <button (click)="downloadCsvTemplate()" class="btn btn-download">
+      📥 Download CSV Template
+    </button>
+  </div>
+
+  <!-- CSV Format Info -->
+  <div class="csv-format-info">
+    <h4>CSV Format:</h4>
+    <table class="format-table">
+      <thead>
+        <tr>
+          <th>Column</th>
+          <th>Required</th>
+          <th>Description</th>
+          <th>Example</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>AccountNumber</td>
+          <td><span class="badge-success">✅ Yes</span></td>
+          <td>Target account number</td>
+          <td>1234567890</td>
+        </tr>
+        <tr>
+          <td>TransactionType</td>
+          <td><span class="badge-success">✅ Yes</span></td>
+          <td>DEBIT, CREDIT, DEPOSIT, WITHDRAWAL</td>
+          <td>CREDIT</td>
+        </tr>
+        <tr>
+          <td>Amount</td>
+          <td><span class="badge-success">✅ Yes</span></td>
+          <td>Transaction amount (positive number)</td>
+          <td>1000.00</td>
+        </tr>
+        <tr>
+          <td>Description</td>
+          <td><span class="badge-error">❌ No</span></td>
+          <td>Transaction description</td>
+          <td>Salary deposit</td>
+        </tr>
+        <tr>
+          <td>Category</td>
+          <td><span class="badge-error">❌ No</span></td>
+          <td>Transaction category</td>
+          <td>SALARY</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- File Upload -->
+  <div class="file-upload-section">
+    <h4>Upload CSV File:</h4>
+    <div class="file-input-wrapper">
+      <input 
+        type="file" 
+        accept=".csv"
+        (change)="handleFileSelect($event)"
+        [disabled]="uploading"
+        #fileInput
+      />
+      <div *ngIf="selectedFile" class="selected-file">
+        📄 {{ selectedFile.name }} ({{ (selectedFile.size / 1024).toFixed(2) }} KB)
+      </div>
+    </div>
+    
+    <button 
+      (click)="handleUpload()"
+      [disabled]="!selectedFile || uploading"
+      class="btn btn-upload"
+    >
+      {{ uploading ? '⏳ Uploading...' : '📤 Upload and Process' }}
+    </button>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="alert alert-error">
+    <strong>❌ Error!</strong> {{ errorMessage }}
+  </div>
+
+  <!-- Upload Results -->
+  <div *ngIf="uploadResult" class="upload-results">
+    <h4>📊 Upload Results</h4>
+    
+    <div class="results-summary">
+      <div class="stat-card success">
+        <div class="stat-value">{{ uploadResult.successfulTransactions }}</div>
+        <div class="stat-label">Successful</div>
+      </div>
+      <div class="stat-card failed">
+        <div class="stat-value">{{ uploadResult.failedTransactions }}</div>
+        <div class="stat-label">Failed</div>
+      </div>
+      <div class="stat-card total">
+        <div class="stat-value">{{ uploadResult.totalTransactions }}</div>
+        <div class="stat-label">Total</div>
+      </div>
+    </div>
+
+    <div class="batch-info">
+      <strong>Batch ID:</strong> {{ uploadResult.batchId }}
+    </div>
+
+    <!-- Errors Table -->
+    <div *ngIf="uploadResult.errors && uploadResult.errors.length > 0" class="errors-section">
+      <h5>❌ Failed Transactions:</h5>
+      <table class="errors-table">
+        <thead>
+          <tr>
+            <th>Row</th>
+            <th>Account Number</th>
+            <th>Error</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let error of uploadResult.errors">
+            <td>{{ error.rowNumber }}</td>
+            <td>{{ error.accountNumber }}</td>
+            <td class="error-message">{{ error.error }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Successful Transactions Preview -->
+    <div *ngIf="uploadResult.successfulResults && uploadResult.successfulResults.length > 0" class="success-section">
+      <h5>✅ Successful Transactions (First 10):</h5>
+      <table class="success-table">
+        <thead>
+          <tr>
+            <th>Reference</th>
+            <th>Account</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let txn of uploadResult.successfulResults.slice(0, 10)">
+            <td>{{ txn.transactionReference }}</td>
+            <td>{{ txn.accountNumber }}</td>
+            <td>
+              <span class="badge badge-{{ txn.transactionType.toLowerCase() }}">
+                {{ txn.transactionType }}
+              </span>
+            </td>
+            <td>{{ txn.currency }} {{ formatAmount(txn.amount) }}</td>
+            <td>
+              <span class="status-badge status-success">{{ txn.status }}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p *ngIf="uploadResult.successfulResults.length > 10" class="more-info">
+        ... and {{ uploadResult.successfulResults.length - 10 }} more transactions
+      </p>
+    </div>
+  </div>
+</div>
+

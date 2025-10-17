@@ -8,9 +8,19 @@
           <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
           <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
         </svg>
-        <h1>Nedbank</h1>
+        <h1>BankOfPeople</h1>
       </div>
       <p class="login-subtitle">Secure Banking Login</p>
+    </div>
+
+    <!-- Session expired message -->
+    <div class="session-expired-message" *ngIf="sessionExpiredMessage()">
+      <svg class="warning-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+        <path d="M12 8V12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M12 16H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span>{{ sessionExpiredMessage() }}</span>
     </div>
 
     <!-- login type toggle -->

@@ -1,0 +1,365 @@
+<div class="money-transfer-container">
+  <!-- ==================== FORM VIEW ==================== -->
+  <div *ngIf="currentView === 'form'" class="transfer-form-view">
+    <div class="form-header">
+      <h2 class="form-title">💸 Transfer Money</h2>
+      <p class="form-subtitle">Send money to other accounts instantly</p>
+    </div>
+
+    <form (ngSubmit)="handleSubmit()" #transferForm="ngForm" class="transfer-form">
+      <!-- Source Account Selection -->
+      <div class="form-group">
+        <label class="form-label">
+          From Account <span class="required">*</span>
+        </label>
+        <select 
+          [(ngModel)]="formData.fromAccountNumber"
+          name="fromAccountNumber"
+          class="form-select"
+          (change)="onAccountSelect()"
+          required
+        >
+          <option value="">Select source account</option>
+          <option 
+            *ngFor="let account of userAccounts" 
+            [value]="account.accountNumber"
+          >
+            {{ account.accountType }} - {{ account.accountNumber }} 
+            (Balance: {{ account.currency }} {{ formatAmountFromString(account.availableBalance) }})
+          </option>
+        </select>
+        <div *ngIf="selectedAccount" class="account-info">
+          <span class="info-label">Available Balance:</span>
+          <span class="info-value">{{ selectedAccount.currency }} {{ formatAmountFromString(selectedAccount.availableBalance) }}</span>
+        </div>
+      </div>
+
+      <!-- Recipient Account Number -->
+      <div class="form-group">
+        <label class="form-label">
+          Recipient Account Number <span class="required">*</span>
+        </label>
+        <div class="input-with-validation">
+          <input 
+            type="text"
+            [(ngModel)]="formData.toAccountNumber"
+            name="toAccountNumber"
+            class="form-input"
+            [class.input-error]="accountError"
+            [class.input-success]="isRecipientValid && !accountError"
+            placeholder="1234567890"
+            (blur)="onRecipientAccountBlur()"
+            required
+          />
+          <div *ngIf="validating" class="input-spinner">
+            <div class="spinner"></div>
+          </div>
+        </div>
+        <div class="input-helper">
+          <span *ngIf="validating" class="helper-text">Validating account...</span>
+          <span *ngIf="accountError && !validating" class="helper-error">
+            {{ accountError }}
+          </span>
+          <span *ngIf="isRecipientValid && !validating && !accountError" class="helper-success">
+            ✓ Valid account number
+          </span>
+          <span *ngIf="!validating && !isRecipientValid && !accountError" class="helper-text">
+            Enter recipient account number
+          </span>
+        </div>
+      </div>
+
+      <!-- Amount -->
+      <div class="form-group">
+        <label class="form-label">
+          Amount <span class="required">*</span>
+        </label>
+        <div class="amount-input-wrapper">
+          <span class="currency-symbol">{{ selectedAccount?.currency || 'INR' }}</span>
+          <input 
+            type="number"
+            [(ngModel)]="formData.amount"
+            name="amount"
+            class="form-input amount-input"
+            [class.input-error]="amountError"
+            [class.input-success]="isAmountValid() && !amountError"
+            placeholder="0.00"
+            step="0.01"
+            min="0.01"
+            (blur)="onAmountBlur()"
+            required
+          />
+        </div>
+        <div class="input-helper">
+          <span *ngIf="amountError" class="helper-error">
+            {{ amountError }}
+          </span>
+          <span *ngIf="isAmountValid() && !amountError" class="helper-success">
+            ✓ Valid amount
+          </span>
+          <span *ngIf="selectedAccount && !amountError" class="helper-text">
+            Available: {{ selectedAccount.currency }} {{ formatAmountFromString(selectedAccount.availableBalance) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="form-group">
+        <label class="form-label">
+          Description <span class="required">*</span>
+        </label>
+        <input 
+          type="text"
+          [(ngModel)]="formData.description"
+          name="description"
+          class="form-input"
+          placeholder="e.g., Payment for services"
+          maxlength="200"
+          required
+        />
+        <div class="input-helper">
+          <span class="helper-text">Brief description of the transfer</span>
+        </div>
+      </div>
+
+      <!-- Notes (Optional) -->
+      <div class="form-group">
+        <label class="form-label">Notes (Optional)</label>
+        <textarea 
+          [(ngModel)]="formData.notes"
+          name="notes"
+          class="form-textarea"
+          placeholder="Add any additional notes..."
+          rows="3"
+          maxlength="500"
+        ></textarea>
+      </div>
+
+      <!-- Error Alert -->
+      <div *ngIf="error" class="alert alert-error">
+        <span class="alert-icon">❌</span>
+        <span class="alert-message">{{ error }}</span>
+        <button type="button" class="alert-close" (click)="error = null">×</button>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="form-actions">
+        <button 
+          type="submit" 
+          class="btn btn-primary"
+          [disabled]="loading || !isRecipientValid || validating || !transferForm.valid"
+        >
+          <span *ngIf="!loading">Continue to Review</span>
+          <span *ngIf="loading" class="btn-loading">
+            <span class="spinner"></span> Processing...
+          </span>
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-secondary"
+          (click)="resetForm()"
+          [disabled]="loading"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ==================== CONFIRMATION VIEW ==================== -->
+  <div *ngIf="currentView === 'confirmation'" class="confirmation-view">
+    <div class="confirmation-header">
+      <h2 class="confirmation-title">Confirm Transfer</h2>
+      <p class="confirmation-subtitle">Please review the transfer details before confirming</p>
+    </div>
+
+    <div class="confirmation-content">
+      <!-- From Account -->
+      <div class="transfer-card from-card">
+        <div class="card-label">FROM</div>
+        <div class="card-title">{{ selectedAccount?.accountType }}</div>
+        <div class="card-subtitle">{{ selectedAccount?.accountNumber }}</div>
+        <div class="card-balance">
+          Current Balance: {{ selectedAccount?.currency }} {{ formatAmountFromString(selectedAccount?.availableBalance || '0') }}
+        </div>
+      </div>
+
+      <!-- Arrow -->
+      <div class="transfer-arrow">
+        <span class="arrow-icon">⬇</span>
+      </div>
+
+      <!-- To Account -->
+      <div class="transfer-card to-card">
+        <div class="card-label">TO</div>
+        <div class="card-title">Recipient Account</div>
+        <div class="card-subtitle">{{ formData.toAccountNumber }}</div>
+      </div>
+
+      <!-- Transfer Amount -->
+      <div class="amount-card">
+        <div class="amount-label">TRANSFER AMOUNT</div>
+        <div class="amount-value">
+          {{ selectedAccount?.currency }} {{ formatAmount(formData.amount || 0) }}
+        </div>
+      </div>
+
+      <!-- Description & Notes -->
+      <div class="details-section">
+        <div class="detail-item">
+          <span class="detail-label">Description:</span>
+          <span class="detail-value">{{ formData.description }}</span>
+        </div>
+        <div class="detail-item" *ngIf="formData.notes">
+          <span class="detail-label">Notes:</span>
+          <span class="detail-value">{{ formData.notes }}</span>
+        </div>
+      </div>
+
+      <!-- Balance After Transfer Info -->
+      <div class="alert alert-info">
+        <span class="alert-icon">ℹ️</span>
+        <span class="alert-message">
+          <strong>Balance after transfer:</strong> 
+          {{ selectedAccount?.currency }} {{ formatAmount(getBalanceAfterTransfer()) }}
+        </span>
+      </div>
+
+      <!-- Confirmation Actions -->
+      <div class="confirmation-actions">
+        <button 
+          type="button"
+          class="btn btn-primary btn-large"
+          (click)="confirmTransfer()"
+          [disabled]="loading"
+        >
+          <span *ngIf="!loading">Confirm Transfer</span>
+          <span *ngIf="loading" class="btn-loading">
+            <span class="spinner"></span> Processing...
+          </span>
+        </button>
+        <button 
+          type="button"
+          class="btn btn-secondary btn-large"
+          (click)="cancelConfirmation()"
+          [disabled]="loading"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== RECEIPT VIEW ==================== -->
+  <div *ngIf="currentView === 'receipt' && transferResult" class="receipt-view">
+    <div class="receipt-close">
+      <button type="button" class="close-btn" (click)="closeReceipt()">×</button>
+    </div>
+
+    <!-- Success Icon -->
+    <div class="receipt-success">
+      <div class="success-icon">✓</div>
+      <h2 class="success-title">Transfer Successful!</h2>
+      <div class="status-badge">{{ transferResult.status }}</div>
+    </div>
+
+    <!-- Transaction Reference -->
+    <div class="reference-card">
+      <div class="reference-label">TRANSACTION REFERENCE</div>
+      <div class="reference-value">{{ transferResult.transactionReference }}</div>
+    </div>
+
+    <!-- Transfer Details -->
+    <div class="receipt-details">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">From Account</span>
+          <span class="detail-value">{{ transferResult.fromAccountNumber }}</span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">To Account</span>
+          <span class="detail-value">{{ transferResult.toAccountNumber }}</span>
+        </div>
+
+        <div class="detail-item full-width">
+          <span class="detail-label">Recipient Name</span>
+          <span class="detail-value">{{ transferResult.recipientName }}</span>
+        </div>
+
+        <div class="detail-divider"></div>
+
+        <div class="detail-item highlight">
+          <span class="detail-label">Amount Transferred</span>
+          <span class="detail-value amount-highlight">
+            {{ transferResult.currency }} {{ formatAmount(transferResult.amount) }}
+          </span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Currency</span>
+          <span class="detail-value">{{ transferResult.currency }}</span>
+        </div>
+
+        <div class="detail-divider"></div>
+
+        <div class="detail-item">
+          <span class="detail-label">Balance Before</span>
+          <span class="detail-value">
+            {{ transferResult.currency }} {{ formatAmount(transferResult.senderBalanceBefore) }}
+          </span>
+        </div>
+
+        <div class="detail-item">
+          <span class="detail-label">Balance After</span>
+          <span class="detail-value balance-after">
+            {{ transferResult.currency }} {{ formatAmount(transferResult.senderBalanceAfter) }}
+          </span>
+        </div>
+
+        <div class="detail-divider"></div>
+
+        <div class="detail-item full-width">
+          <span class="detail-label">Description</span>
+          <span class="detail-value">{{ transferResult.description }}</span>
+        </div>
+
+        <div class="detail-item full-width">
+          <span class="detail-label">Date & Time</span>
+          <span class="detail-value">{{ formatDate(transferResult.transactionDate) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="receipt-actions">
+      <button 
+        type="button"
+        class="btn btn-outline"
+        (click)="downloadReceipt()"
+      >
+        📥 Download Receipt
+      </button>
+      <button 
+        type="button"
+        class="btn btn-outline"
+        (click)="shareReceipt()"
+      >
+        📤 Share
+      </button>
+    </div>
+
+    <button 
+      type="button"
+      class="btn btn-primary btn-large"
+      (click)="closeReceipt()"
+    >
+      Done
+    </button>
+
+    <!-- Footer Note -->
+    <div class="receipt-footer">
+      <p>{{ transferResult.message }}</p>
+    </div>
+  </div>
+</div>

@@ -1,13 +1,8 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
-import { Store } from '@ngrx/store';
-import { Observable, combineLatest, map, switchMap, of } from 'rxjs';
 
 import { User } from '../../store/userStore/user.action';
-import { selectUser, selectUserFullName, selectUserInitials } from '../../store/userStore/user.selectors';
-import { userActions } from '../../store/userStore/user.action';
-
 import { UserService } from '../../store/userStore/user.service';
 import { NavigationService, NavigationItem } from '../../services/navigation.service';
 
@@ -24,13 +19,14 @@ export class DashboardComponent implements OnInit {
   private navigationService = inject(NavigationService);
   
   user$ = this.userService.user$;
-  isLoading$ = this.userService.isLoading$;
-  error$ = this.userService.error$;
   userFullName$ = this.userService.userFullName$;
   userInitials$ = this.userService.userInitials$;
   
-  // Navigation items - simple array approach
+  // Navigation items
   navigationItems: NavigationItem[] = [];
+  
+  // Dropdown state
+  openDropdownIndex: number | null = null;
 
   constructor() {
     // Subscribe to role changes and update navigation items
@@ -47,15 +43,37 @@ export class DashboardComponent implements OnInit {
     });
   }
   
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    // Close dropdown when clicking outside
+    const target = event.target as HTMLElement;
+    if (!target.closest('.nav-dropdown')) {
+      this.openDropdownIndex = null;
+    }
+  }
+  
   ngOnInit(): void {
     console.log("Dashboard component initialized");
     this.userService.loadProfile();
-  }
-
-  //print user profile
-  printUserProfile(): void {
-    this.userService.user$.subscribe(user => {
-      console.log("User Profile:", user);
+    
+    // Auto-redirect based on user role
+    this.userService.role$.subscribe(role => {
+      console.log("User Role:", role);
+      const currentPath = this.router.url;
+      
+      // Only redirect if on base dashboard path
+      if (currentPath === '/dashboard' || currentPath === '/') {
+        if (role === 'admin' || role === 'superadmin') {
+          console.log('Admin user detected, redirecting to admin dashboard');
+          this.router.navigate(['/dashboard/admin']);
+        } else if (role === 'accountant') {
+          console.log('Accountant user detected, redirecting to bulk-upload');
+          this.router.navigate(['/dashboard/transactions/bulk-upload']);
+        } else if (role === 'customer') {
+          console.log('Customer user detected, redirecting to home');
+          this.router.navigate(['/dashboard/home']);
+        }
+      }
     });
   }
 
@@ -67,5 +85,29 @@ export class DashboardComponent implements OnInit {
   getUserRoleDisplay(user: User | null): string {
     if (!user?.role) return 'User';
     return user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase();
+  }
+
+  isAnyChildActive(children: NavigationItem[]): boolean {
+    if (!children) return false;
+    const currentPath = this.router.url;
+    return children.some(child => currentPath.startsWith(child.routerLink));
+  }
+  
+  toggleDropdown(index: number, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (this.openDropdownIndex === index) {
+      this.openDropdownIndex = null;
+    } else {
+      this.openDropdownIndex = index;
+    }
+  }
+  
+  isDropdownOpen(index: number): boolean {
+    return this.openDropdownIndex === index;
+  }
+  
+  closeDropdown(): void {
+    this.openDropdownIndex = null;
   }
 }

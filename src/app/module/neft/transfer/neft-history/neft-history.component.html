@@ -1,0 +1,415 @@
+<div class="neft-history-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Transfer History</h1>
+      <p class="page-subtitle">Track your NEFT transfers</p>
+    </div>
+    <button class="btn btn-primary" (click)="navigateToNewTransfer()">
+      <span class="icon">+</span> New Transfer
+    </button>
+  </div>
+
+  <!-- Filter Panel -->
+  <div class="filter-panel">
+    <div class="filter-group">
+      <select
+        [value]="selectedAccountNumber()"
+        (change)="onAccountChange($event)"
+        class="filter-select"
+      >
+        <option value="">Select Account</option>
+        <option *ngFor="let account of accounts()" [value]="account.accountNumber">
+          {{ account.accountNumber }} - {{ account.accountType }}
+        </option>
+      </select>
+    </div>
+    <div class="search-box">
+      <input
+        type="text"
+        placeholder="Search by beneficiary, reference, or amount"
+        [value]="searchTerm()"
+        (input)="onSearchChange($event)"
+        class="search-input"
+      />
+    </div>
+    <div class="filter-group">
+      <select
+        [value]="dateFilter()"
+        (change)="onDateFilterChange($event)"
+        class="filter-select"
+      >
+        <option value="ALL">All Time</option>
+        <option value="TODAY">Today</option>
+        <option value="LAST_7">Last 7 Days</option>
+        <option value="LAST_30">Last 30 Days</option>
+      </select>
+      <select
+        [value]="statusFilter()"
+        (change)="onStatusFilterChange($event)"
+        class="filter-select"
+      >
+        <option value="ALL">All Status</option>
+        <option value="PENDING">Pending</option>
+        <option value="PROCESSING">Processing</option>
+        <option value="COMPLETED">Completed</option>
+        <option value="FAILED">Failed</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading transfer history...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error()" class="error-state">
+    <p class="error-message">{{ error() }}</p>
+    <button class="btn btn-secondary" (click)="loadTransferHistory()">Retry</button>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading() && !error() && filteredTransfers().length === 0" class="empty-state">
+    <div class="empty-illustration">📝</div>
+    <h3>No transfers found</h3>
+    <p>Your NEFT transfer history will appear here</p>
+    <button class="btn btn-primary btn-large" (click)="navigateToNewTransfer()">
+      Make Your First Transfer
+    </button>
+  </div>
+
+  <!-- Transfer List -->
+  <div *ngIf="!loading() && !error() && filteredTransfers().length > 0" class="transfers-list">
+    <div
+      *ngFor="let transfer of filteredTransfers()"
+      class="transfer-card"
+      [class.highlighted]="isHighlighted(transfer)"
+      (click)="openDetailsModal(transfer)"
+    >
+      <!-- Card Header -->
+      <div class="card-header">
+        <div class="date-time">
+          <div class="date">{{ formatDate(transfer.initiatedAt) }}</div>
+          <div class="time">{{ formatTime(transfer.initiatedAt) }}</div>
+        </div>
+        <span
+          class="status-badge"
+          [ngClass]="getStatusClass(transfer.status)"
+        >
+          {{ getStatusIcon(transfer.status) }} {{ getStatusLabel(transfer.status) }}
+        </span>
+      </div>
+
+      <!-- Card Body -->
+      <div class="card-body">
+        <div class="beneficiary-info">
+          <div class="beneficiary-name">{{ transfer.beneficiaryName }}</div>
+          <div class="bank-name">{{ transfer.beneficiaryBank }}</div>
+        </div>
+        <div class="amount">{{ formatCurrency(transfer.amount) }}</div>
+      </div>
+
+      <!-- Card Footer -->
+      <div class="card-footer">
+        <div class="reference">
+          <span class="label">Ref:</span>
+          <span class="value">{{ transfer.eftReference }}</span>
+        </div>
+        <button class="btn-link" (click)="$event.stopPropagation(); openDetailsModal(transfer)">
+          View Details →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Details Modal -->
+  <div *ngIf="showDetailsModal()" class="modal-overlay" (click)="closeDetailsModal()">
+    <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <div>
+          <span
+            class="status-badge"
+            [ngClass]="getStatusClass(selectedTransfer()!.status)"
+          >
+            {{ getStatusIcon(selectedTransfer()!.status) }} {{ getStatusLabel(selectedTransfer()!.status) }}
+          </span>
+          <div class="reference-number">
+            <span>{{ selectedTransfer()!.eftReference }}</span>
+            <button class="copy-btn" (click)="copyToClipboard(selectedTransfer()!.eftReference)">📋</button>
+          </div>
+        </div>
+        <button class="close-btn" (click)="closeDetailsModal()">×</button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button
+          class="tab"
+          [class.active]="activeTab() === 'overview'"
+          (click)="setActiveTab('overview')"
+        >
+          Overview
+        </button>
+        <button
+          class="tab"
+          [class.active]="activeTab() === 'timeline'"
+          (click)="setActiveTab('timeline')"
+        >
+          Timeline
+        </button>
+        <button
+          class="tab"
+          [class.active]="activeTab() === 'receipt'"
+          (click)="setActiveTab('receipt')"
+        >
+          Receipt
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <!-- Overview Tab -->
+        <div *ngIf="activeTab() === 'overview'" class="tab-content">
+          <!-- Transfer Amount -->
+          <div class="details-section">
+            <h3>Transfer Amount</h3>
+            <div class="amount-breakdown">
+              <div class="breakdown-row">
+                <span>Transfer Amount:</span>
+                <span>{{ formatCurrency(selectedTransfer()!.amount) }}</span>
+              </div>
+              <div class="breakdown-row" *ngIf="selectedTransfer()!.charges">
+                <span>NEFT Charges:</span>
+                <span>{{ formatCurrency(selectedTransfer()!.charges) }}</span>
+              </div>
+              <div class="breakdown-row total" *ngIf="selectedTransfer()!.totalAmount">
+                <span>Total Debited:</span>
+                <span>{{ formatCurrency(selectedTransfer()!.totalAmount) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- From Account -->
+          <div class="details-section">
+            <h3>From Account</h3>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="label">Account Number:</span>
+                <span class="value">{{ selectedTransfer()!.fromAccountNumber }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- To Beneficiary -->
+          <div class="details-section">
+            <h3>To Beneficiary</h3>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="label">Name:</span>
+                <span class="value">{{ selectedTransfer()!.beneficiaryName }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Bank:</span>
+                <span class="value">{{ selectedTransfer()!.beneficiaryBank }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Account Number:</span>
+                <span class="value">{{ selectedTransfer()!.beneficiaryAccountNumber }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Transfer Information -->
+          <div class="details-section">
+            <h3>Transfer Information</h3>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="label">Purpose:</span>
+                <span class="value">{{ selectedTransfer()!.purpose }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Reference Number:</span>
+                <span class="value">{{ selectedTransfer()!.eftReference }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Initiated:</span>
+                <span class="value">{{ formatDateTime(selectedTransfer()!.initiatedAt) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Processing Information -->
+          <div class="details-section">
+            <h3>Processing Information</h3>
+            <div class="detail-grid">
+              <div class="detail-item" *ngIf="selectedTransfer()!.batchId">
+                <span class="label">Batch ID:</span>
+                <span class="value">{{ selectedTransfer()!.batchId }}</span>
+              </div>
+              <div class="detail-item" *ngIf="selectedTransfer()!.batchTime">
+                <span class="label">Batch Time:</span>
+                <span class="value">{{ selectedTransfer()!.batchTime }}</span>
+              </div>
+              <div class="detail-item" *ngIf="selectedTransfer()!.estimatedCompletion">
+                <span class="label">Estimated Completion:</span>
+                <span class="value">{{ formatDateTime(selectedTransfer()!.estimatedCompletion) }}</span>
+              </div>
+              <div class="detail-item" *ngIf="selectedTransfer()!.actualCompletion">
+                <span class="label">Completed:</span>
+                <span class="value">{{ formatDateTime(selectedTransfer()!.actualCompletion) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Status-Specific Information -->
+          <div *ngIf="selectedTransfer()!.status === 'COMPLETED'" class="alert alert-success">
+            ✅ Transfer completed successfully<br>
+            Funds credited to beneficiary account
+          </div>
+
+          <div *ngIf="selectedTransfer()!.status === 'FAILED'" class="alert alert-danger">
+            ❌ Transfer failed<br>
+            <strong>Reason:</strong> {{ selectedTransfer()!.failureReason }}<br>
+            Amount has been refunded to your account
+          </div>
+
+          <div *ngIf="selectedTransfer()!.status === 'PENDING' || selectedTransfer()!.status === 'QUEUED'" class="alert alert-info">
+            ⏳ Transfer queued for processing<br>
+            Will be processed in the next NEFT batch
+          </div>
+        </div>
+
+        <!-- Timeline Tab -->
+        <div *ngIf="activeTab() === 'timeline'" class="tab-content">
+          <div class="timeline">
+            <div class="timeline-item completed">
+              <div class="timeline-icon">✓</div>
+              <div class="timeline-content">
+                <div class="timeline-title">Transfer Initiated</div>
+                <div class="timeline-time">{{ formatDateTime(selectedTransfer()!.initiatedAt) }}</div>
+              </div>
+            </div>
+            
+            <div class="timeline-item completed">
+              <div class="timeline-icon">✓</div>
+              <div class="timeline-content">
+                <div class="timeline-title">Amount Debited</div>
+                <div class="timeline-time">{{ formatDateTime(selectedTransfer()!.initiatedAt) }}</div>
+              </div>
+            </div>
+
+            <div
+              class="timeline-item"
+              [class.completed]="selectedTransfer()!.status !== 'PENDING'"
+              [class.current]="selectedTransfer()!.status === 'QUEUED'"
+            >
+              <div class="timeline-icon">{{ selectedTransfer()!.status === 'PENDING' ? '⏱' : '✓' }}</div>
+              <div class="timeline-content">
+                <div class="timeline-title">Queued for Batch</div>
+                <div class="timeline-time" *ngIf="selectedTransfer()!.status !== 'PENDING'">
+                  {{ formatDateTime(selectedTransfer()!.initiatedAt) }}
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="timeline-item"
+              [class.completed]="selectedTransfer()!.status === 'COMPLETED'"
+              [class.current]="selectedTransfer()!.status === 'PROCESSING'"
+              [class.failed]="selectedTransfer()!.status === 'FAILED'"
+            >
+              <div class="timeline-icon">
+                {{ selectedTransfer()!.status === 'COMPLETED' ? '✓' : (selectedTransfer()!.status === 'FAILED' ? '✗' : '⏱') }}
+              </div>
+              <div class="timeline-content">
+                <div class="timeline-title">
+                  {{ selectedTransfer()!.status === 'FAILED' ? 'Failed' : 'Completed' }}
+                </div>
+                <div class="timeline-time" *ngIf="selectedTransfer()!.actualCompletion">
+                  {{ formatDateTime(selectedTransfer()!.actualCompletion) }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Receipt Tab -->
+        <div *ngIf="activeTab() === 'receipt'" class="tab-content">
+          <div class="receipt">
+            <div class="receipt-header">
+              <h2>NEFT Transfer Receipt</h2>
+              <div class="receipt-date">{{ formatDate(selectedTransfer()!.initiatedAt) }}</div>
+            </div>
+
+            <div class="receipt-body">
+              <div class="receipt-section">
+                <div class="receipt-row">
+                  <span class="label">Reference Number:</span>
+                  <span class="value">{{ selectedTransfer()!.eftReference }}</span>
+                </div>
+                <div class="receipt-row">
+                  <span class="label">Status:</span>
+                  <span class="value">{{ getStatusLabel(selectedTransfer()!.status) }}</span>
+                </div>
+                <div class="receipt-row">
+                  <span class="label">Date & Time:</span>
+                  <span class="value">{{ formatDateTime(selectedTransfer()!.initiatedAt) }}</span>
+                </div>
+              </div>
+
+              <div class="receipt-section">
+                <h4>Transfer Details</h4>
+                <div class="receipt-row">
+                  <span class="label">Amount:</span>
+                  <span class="value">{{ formatCurrency(selectedTransfer()!.amount) }}</span>
+                </div>
+                <div class="receipt-row" *ngIf="selectedTransfer()!.charges">
+                  <span class="label">Charges:</span>
+                  <span class="value">{{ formatCurrency(selectedTransfer()!.charges) }}</span>
+                </div>
+                <div class="receipt-row" *ngIf="selectedTransfer()!.totalAmount">
+                  <span class="label">Total:</span>
+                  <span class="value strong">{{ formatCurrency(selectedTransfer()!.totalAmount) }}</span>
+                </div>
+              </div>
+
+              <div class="receipt-section">
+                <h4>Beneficiary Details</h4>
+                <div class="receipt-row">
+                  <span class="label">Name:</span>
+                  <span class="value">{{ selectedTransfer()!.beneficiaryName }}</span>
+                </div>
+                <div class="receipt-row">
+                  <span class="label">Bank:</span>
+                  <span class="value">{{ selectedTransfer()!.beneficiaryBank }}</span>
+                </div>
+                <div class="receipt-row">
+                  <span class="label">Account:</span>
+                  <span class="value">{{ selectedTransfer()!.beneficiaryAccountNumber }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="receipt-actions">
+            <button class="btn btn-primary" (click)="downloadReceipt(selectedTransfer()!.eftTransactionId.toString())">
+              📥 Download PDF
+            </button>
+            <button class="btn btn-secondary" (click)="copyToClipboard(selectedTransfer()!.eftReference)">
+              📋 Copy Reference
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeDetailsModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+

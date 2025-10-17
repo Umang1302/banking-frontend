@@ -10,6 +10,16 @@ export const selectUser = createSelector(
   (state: UserState) => state.user
 );
 
+export const selectCustomer = createSelector(
+  selectUser,
+  (user) => user?.customer
+);
+
+export const selectCustomerNumber = createSelector(
+  selectUser,
+  (user) => user?.customer?.customerNumber
+);
+
 export const selectToken = createSelector(
   selectUserState,
   (state: UserState) => state.token

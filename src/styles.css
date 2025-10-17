@@ -1,12 +1,14 @@
 /* You can add global styles to this file, and also import other style files */
 
-/* Global CSS Variables - Banking Color Palette */
+/* Global CSS Variables - ICICI Bank Color Palette */
 :root {
-  /* Primary Colors */
-  --primary-gradient-start: #667eea;
-  --primary-gradient-end: #764ba2;
-  --primary-color: #667eea;
-  --primary-hover: #5a67d8;
+  /* Primary Colors - ICICI Bank Brand */
+  --primary-gradient-start: #B02A30;
+  --primary-gradient-end: #F99D27;
+  --primary-color: #B02A30;
+  --primary-hover: #8e2227;
+  --secondary-color: #F99D27;
+  --accent-color: #005B75;
   
   /* Text Colors */
   --text-primary: #2d3748;
@@ -21,7 +23,7 @@
   
   /* Border Colors */
   --border-light: #e2e8f0;
-  --border-focus: #667eea;
+  --border-focus: #B02A30;
   
   /* Status Colors */
   --success-color: #68d391;
@@ -30,12 +32,12 @@
   
   /* Interactive Colors */
   --hover-bg: #edf2f7;
-  --focus-ring: rgba(102, 126, 234, 0.1);
+  --focus-ring: rgba(176, 42, 48, 0.1);
   --shadow-light: rgba(0, 0, 0, 0.1);
-  --shadow-focus: rgba(102, 126, 234, 0.3);
+  --shadow-focus: rgba(176, 42, 48, 0.3);
   
   /* Component Specific */
-  --checkbox-checked: #667eea;
+  --checkbox-checked: #B02A30;
   --input-bg: #f7fafc;
   --input-focus-bg: #ffffff;
   

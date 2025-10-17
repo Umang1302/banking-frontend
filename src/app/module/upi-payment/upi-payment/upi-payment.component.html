@@ -1,0 +1,139 @@
+<div class="upi-payment-container">
+  <div class="page-header">
+    <h1>UPI Payment</h1>
+    <p>Send money instantly using UPI</p>
+  </div>
+
+  <!-- Alerts -->
+  <div *ngIf="error()" class="alert alert-danger">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="8" x2="12" y2="12"></line>
+      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+    </svg>
+    <span>{{ error() }}</span>
+  </div>
+  
+  <div *ngIf="success()" class="alert alert-success">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+    </svg>
+    <span>{{ success() }}</span>
+  </div>
+
+  <div class="form-card">
+    <h2>Payment Details</h2>
+
+    <!-- Receiver UPI ID -->
+    <div class="form-group">
+      <label>Receiver UPI ID *</label>
+      <div class="input-with-validation">
+        <input 
+          type="text" 
+          [(ngModel)]="receiverUpiId" 
+          (blur)="validateUPI()"
+          placeholder="receiver@paytm"
+          class="form-control"
+          [class.valid]="upiValid() === true"
+          [class.invalid]="upiValid() === false">
+        <span *ngIf="validating()" class="validation-icon">⏳</span>
+        <span *ngIf="upiValid() === true" class="validation-icon success">✓</span>
+        <span *ngIf="upiValid() === false" class="validation-icon error">✗</span>
+      </div>
+      <small *ngIf="upiValid() === false" class="form-text error">Invalid UPI ID format</small>
+    </div>
+
+    <!-- Payer Account -->
+    <div class="form-group">
+      <label>From Account *</label>
+      <select [(ngModel)]="selectedPayerAccount" class="form-control">
+        <option value="">Select account</option>
+        <option *ngFor="let account of accounts()" [value]="account.accountNumber">
+          {{ account.accountNumber }} - {{ account.accountType }} (₹{{ account.balance | number:'1.2-2' }})
+        </option>
+      </select>
+    </div>
+
+    <!-- Amount -->
+    <div class="form-group">
+      <label>Amount (INR) *</label>
+      <input 
+        type="number" 
+        [(ngModel)]="amount" 
+        placeholder="Enter amount"
+        class="form-control"
+        min="1"
+        max="100000"
+        step="0.01">
+      <div class="quick-amounts">
+        <button *ngFor="let quickAmount of quickAmounts" 
+                type="button"
+                class="quick-amount-btn"
+                (click)="setQuickAmount(quickAmount)">
+          ₹{{ quickAmount }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="form-group">
+      <label>Description (Optional)</label>
+      <textarea 
+        [(ngModel)]="description" 
+        placeholder="Purpose of payment"
+        class="form-control"
+        rows="3"
+        maxlength="200"></textarea>
+    </div>
+
+    <!-- Account Summary -->
+    <div *ngIf="getSelectedAccount() && amount()" class="account-summary">
+      <h3>Payment Summary</h3>
+      <div class="summary-row">
+        <span>Current Balance:</span>
+        <strong>{{ formatAmount(getSelectedAccount().balance) }}</strong>
+      </div>
+      <div class="summary-row">
+        <span>Amount to Pay:</span>
+        <strong>{{ formatAmount(amount()) }}</strong>
+      </div>
+      <div class="summary-row total">
+        <span>Balance After:</span>
+        <strong>{{ formatAmount(getSelectedAccount().balance - amount()) }}</strong>
+      </div>
+    </div>
+
+    <!-- Submit Button -->
+    <div class="form-actions">
+      <button 
+        type="button"
+        class="btn btn-primary"
+        (click)="initiatePayment()"
+        [disabled]="processing() || !receiverUpiId() || !selectedPayerAccount() || !amount()">
+        <span *ngIf="!processing()">Pay via UPI</span>
+        <span *ngIf="processing()">Processing...</span>
+      </button>
+      <button type="button" class="btn btn-secondary" (click)="resetForm()">Reset</button>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Modal -->
+<app-payment-modal
+  [isOpen]="showPaymentModal()"
+  [isSuccess]="paymentSuccess()"
+  [message]="paymentMessage()"
+  [transactionReference]="paymentResponse()?.transactionReference || ''"
+  [amount]="paymentResponse()?.amount || 0"
+  [currency]="paymentResponse()?.currency || 'INR'"
+  [receiverName]="paymentResponse()?.receiverName || ''"
+  [payerBalanceBefore]="0"
+  [payerBalanceAfter]="0"
+  [paidAt]="paymentResponse()?.initiatedAt || ''"
+  [paymentType]="'UPI'"
+  (close)="closePaymentModal()"
+  (downloadReceipt)="downloadReceipt()"
+  (viewTransaction)="viewTransaction()">
+</app-payment-modal>
+

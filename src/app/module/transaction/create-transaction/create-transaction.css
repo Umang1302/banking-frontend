@@ -1,0 +1,692 @@
+/* ==================== Container ==================== */
+.money-transfer-container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+/* ==================== Form View ==================== */
+.transfer-form-view {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+}
+
+.form-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.form-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 0.5rem 0;
+}
+
+.form-subtitle {
+  font-size: 0.95rem;
+  color: #666;
+  margin: 0;
+}
+
+/* ==================== Form Elements ==================== */
+.transfer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.required {
+  color: #e74c3c;
+}
+
+.form-select,
+.form-input,
+.form-textarea {
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.form-select:focus,
+.form-input:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: #B02A30;
+  box-shadow: 0 0 0 3px rgba(176, 42, 48, 0.1);
+}
+
+.form-select {
+  cursor: pointer;
+  background-color: white;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Input States */
+.input-error {
+  border-color: #e74c3c !important;
+}
+
+.input-success {
+  border-color: #27ae60 !important;
+}
+
+/* Input with Validation */
+.input-with-validation {
+  position: relative;
+}
+
+.input-spinner {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Amount Input */
+.amount-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.currency-symbol {
+  position: absolute;
+  left: 1rem;
+  font-weight: 600;
+  color: #666;
+  pointer-events: none;
+}
+
+.amount-input {
+  padding-left: 3.5rem !important;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+/* Account Info */
+.account-info {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.info-label {
+  color: #666;
+}
+
+.info-value {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+/* Input Helper Text */
+.input-helper {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.helper-success {
+  color: #27ae60;
+  font-weight: 500;
+}
+
+.helper-error {
+  color: #e74c3c;
+  font-weight: 500;
+}
+
+/* Recipient Chip */
+.recipient-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #d4edda;
+  color: #155724;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.chip-icon {
+  font-size: 1rem;
+}
+
+/* ==================== Alerts ==================== */
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  position: relative;
+}
+
+.alert-error {
+  background: #fee;
+  color: #c33;
+  border: 1px solid #fcc;
+}
+
+.alert-info {
+  background: #e3f2fd;
+  color: #1976d2;
+  border: 1px solid #bbdefb;
+}
+
+.alert-success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.alert-icon {
+  font-size: 1.2rem;
+}
+
+.alert-message {
+  flex: 1;
+}
+
+.alert-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.alert-close:hover {
+  opacity: 1;
+}
+
+/* ==================== Buttons ==================== */
+.form-actions,
+.confirmation-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.btn {
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #B02A30 0%, #F99D27 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(176, 42, 48, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(176, 42, 48, 0.4);
+}
+
+.btn-secondary {
+  background: #f8f9fa;
+  color: #495057;
+  border: 2px solid #dee2e6;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #e9ecef;
+}
+
+.btn-outline {
+  background: white;
+  color: #495057;
+  border: 2px solid #dee2e6;
+}
+
+.btn-outline:hover:not(:disabled) {
+  background: #f8f9fa;
+  border-color: #adb5bd;
+}
+
+.btn-large {
+  font-size: 1.1rem;
+  padding: 1rem 1.5rem;
+}
+
+.btn-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ==================== Spinner ==================== */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+.input-spinner .spinner {
+  border-color: rgba(176, 42, 48, 0.3);
+  border-top-color: #B02A30;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ==================== Confirmation View ==================== */
+.confirmation-view {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+}
+
+.confirmation-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.confirmation-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #B02A30;
+  margin: 0 0 0.5rem 0;
+}
+
+.confirmation-subtitle {
+  font-size: 0.95rem;
+  color: #666;
+  margin: 0;
+}
+
+.confirmation-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Transfer Cards */
+.transfer-card {
+  padding: 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.from-card {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.to-card {
+  background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+}
+
+.card-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #666;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 0.25rem;
+}
+
+.card-subtitle {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.75rem;
+  font-family: monospace;
+}
+
+.card-balance {
+  font-size: 0.9rem;
+  color: #495057;
+}
+
+/* Transfer Arrow */
+.transfer-arrow {
+  text-align: center;
+  padding: 0.5rem 0;
+}
+
+.arrow-icon {
+  font-size: 2.5rem;
+  color: #B02A30;
+}
+
+/* Amount Card */
+.amount-card {
+  padding: 2rem;
+  background: linear-gradient(135deg, #B02A30 0%, #F99D27 100%);
+  border-radius: 12px;
+  text-align: center;
+  color: white;
+  box-shadow: 0 4px 12px rgba(176, 42, 48, 0.3);
+}
+
+.amount-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  opacity: 0.9;
+  margin-bottom: 0.5rem;
+}
+
+.amount-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Details Section */
+.details-section {
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 10px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.detail-item:last-child {
+  margin-bottom: 0;
+}
+
+.detail-label {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.detail-value {
+  font-size: 1rem;
+  color: #1a1a1a;
+  font-weight: 500;
+}
+
+/* ==================== Receipt View ==================== */
+.receipt-view {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  position: relative;
+}
+
+.receipt-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+.close-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: #f8f9fa;
+  color: #495057;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.close-btn:hover {
+  background: #e9ecef;
+  transform: rotate(90deg);
+}
+
+/* Receipt Success */
+.receipt-success {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-top: 1rem;
+}
+
+.success-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 3rem;
+  font-weight: bold;
+  margin: 0 auto 1rem;
+  box-shadow: 0 4px 12px rgba(17, 153, 142, 0.3);
+}
+
+.success-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #27ae60;
+  margin: 0 0 1rem 0;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.5rem 1.5rem;
+  background: #d4edda;
+  color: #155724;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* Reference Card */
+.reference-card {
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.reference-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #666;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.reference-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  font-family: 'Courier New', monospace;
+  word-break: break-all;
+}
+
+/* Receipt Details */
+.receipt-details {
+  margin-bottom: 1.5rem;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.detail-grid .detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detail-grid .detail-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.detail-grid .detail-item.highlight {
+  grid-column: 1 / -1;
+}
+
+.detail-divider {
+  grid-column: 1 / -1;
+  height: 1px;
+  background: #e0e0e0;
+}
+
+.amount-highlight {
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  color: #B02A30 !important;
+}
+
+.balance-after {
+  font-weight: 700 !important;
+  color: #27ae60 !important;
+}
+
+/* Receipt Actions */
+.receipt-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.receipt-footer {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e0e0e0;
+  text-align: center;
+}
+
+.receipt-footer p {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 0;
+}
+
+/* ==================== Responsive Design ==================== */
+@media (max-width: 768px) {
+  .money-transfer-container {
+    margin: 1rem auto;
+  }
+
+  .transfer-form-view,
+  .confirmation-view,
+  .receipt-view {
+    padding: 1.5rem;
+  }
+
+  .form-title,
+  .confirmation-title,
+  .success-title {
+    font-size: 1.5rem;
+  }
+
+  .amount-value {
+    font-size: 2rem;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .receipt-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .transfer-form-view,
+  .confirmation-view,
+  .receipt-view {
+    padding: 1rem;
+  }
+
+  .form-title,
+  .confirmation-title,
+  .success-title {
+    font-size: 1.25rem;
+  }
+
+  .btn {
+    font-size: 0.95rem;
+  }
+}
+
+/* ==================== Print Styles ==================== */
+@media print {
+  .money-transfer-container {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .receipt-close,
+  .receipt-actions,
+  .btn {
+    display: none !important;
+  }
+
+  .receipt-view {
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+}

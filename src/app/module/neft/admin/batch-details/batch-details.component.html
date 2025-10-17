@@ -1,0 +1,176 @@
+<div class="batch-details-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="btn-back" (click)="backToBatches()">
+        ← Back to Batches
+      </button>
+      <div>
+        <h1 class="page-title">Batch Details</h1>
+        <p class="page-subtitle" *ngIf="data">{{ data.batchId }}</p>
+      </div>
+    </div>
+    <button class="btn btn-primary" (click)="loadBatchDetails(batchId())">
+      🔄 Refresh
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading batch details...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error()" class="alert alert-danger">
+    {{ error() }}
+    <button class="btn btn-secondary" (click)="loadBatchDetails(batchId())">Retry</button>
+  </div>
+
+  <!-- Batch Details Content -->
+  <div *ngIf="!loading() && !error() && data" class="batch-details-content">
+    <!-- Batch Summary Cards -->
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-label">Batch ID</div>
+        <div class="summary-value">{{ data.batchId }}</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">Batch Time</div>
+        <div class="summary-value">{{ formatTime(data.batchTime) }}</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">Status</div>
+        <div class="summary-value">
+          <span class="status-badge" [ngClass]="getStatusClass(data.status)">
+            {{ data.status }}
+          </span>
+        </div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">Processed At</div>
+        <div class="summary-value">{{ formatDateTime(data.processedAt) }}</div>
+      </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div class="stat-content">
+          <div class="stat-label">Total Transactions</div>
+          <div class="stat-value">{{ data.totalTransactions }}</div>
+        </div>
+      </div>
+
+      <div class="stat-card success">
+        <div class="stat-icon">✓</div>
+        <div class="stat-content">
+          <div class="stat-label">Successful</div>
+          <div class="stat-value">{{ data.successfulTransactions }}</div>
+        </div>
+      </div>
+
+      <div class="stat-card danger">
+        <div class="stat-icon">✗</div>
+        <div class="stat-content">
+          <div class="stat-label">Failed</div>
+          <div class="stat-value">{{ data.failedTransactions }}</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">💰</div>
+        <div class="stat-content">
+          <div class="stat-label">Total Amount</div>
+          <div class="stat-value">{{ formatCurrency(data.totalAmount) }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Success Rate -->
+    <div class="success-rate-card">
+      <h3>Success Rate</h3>
+      <div class="progress-container">
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="getSuccessRate()"></div>
+        </div>
+        <span class="progress-text">{{ getSuccessRate().toFixed(2) }}%</span>
+      </div>
+    </div>
+
+    <!-- Transactions Table -->
+    <div class="transactions-section">
+      <h3>Transactions in this Batch</h3>
+      
+      <div *ngIf="transactions.length === 0" class="empty-state">
+        <p>No transactions in this batch</p>
+      </div>
+
+      <div *ngIf="transactions.length > 0" class="transactions-table-container">
+        <table class="transactions-table">
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Reference</th>
+              <th>From Account</th>
+              <th>Beneficiary</th>
+              <th>Bank</th>
+              <th>Amount</th>
+              <th>Charges</th>
+              <th>Total</th>
+              <th>Purpose</th>
+              <th>Completion Time</th>
+              <th>Failure Reason</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let transaction of transactions">
+              <td>
+                <span class="status-badge" [ngClass]="getStatusClass(transaction.status)">
+                  {{ transaction.status }}
+                </span>
+              </td>
+              <td class="ref-number">{{ transaction.eftReference }}</td>
+              <td>{{ transaction.fromAccountNumber }}</td>
+              <td>
+                <div class="beneficiary-info">
+                  <div class="beneficiary-name">{{ transaction.beneficiaryName }}</div>
+                  <div class="beneficiary-account">{{ transaction.beneficiaryAccountNumber }}</div>
+                </div>
+              </td>
+              <td>{{ transaction.beneficiaryBank }}</td>
+              <td class="amount-cell">{{ formatCurrency(transaction.amount) }}</td>
+              <td class="amount-cell">{{ formatCurrency(transaction.charges) }}</td>
+              <td class="amount-cell">{{ formatCurrency(transaction.totalAmount) }}</td>
+              <td>{{ transaction.purpose }}</td>
+              <td>
+                <span *ngIf="transaction.actualCompletion">
+                  {{ formatDateTime(transaction.actualCompletion) }}
+                </span>
+                <span *ngIf="!transaction.actualCompletion" class="text-muted">
+                  {{ transaction.estimatedCompletion ? formatDateTime(transaction.estimatedCompletion) : 'N/A' }}
+                </span>
+              </td>
+              <td>
+                <span *ngIf="transaction.failureReason" class="text-danger">
+                  {{ transaction.failureReason }}
+                </span>
+                <span *ngIf="!transaction.failureReason" class="text-muted">-</span>
+              </td>
+              <td>
+                <button 
+                  class="btn btn-sm btn-primary" 
+                  (click)="viewTransactionDetails(transaction.eftReference)">
+                  View
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+

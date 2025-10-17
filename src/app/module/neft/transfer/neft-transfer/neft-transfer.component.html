@@ -1,0 +1,459 @@
+<div class="neft-transfer-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">NEFT Transfer</h1>
+    <p class="page-subtitle">
+      <span class="info-icon">ℹ️</span>
+      NEFT transfers are processed in hourly batches during banking hours
+    </p>
+  </div>
+
+  <!-- Step Indicator -->
+  <div class="step-indicator">
+    <div class="progress-bar">
+      <div class="progress-fill" [style.width.%]="getProgressPercentage()"></div>
+    </div>
+    <div class="steps">
+      <div *ngFor="let step of [1,2,3,4,5]" 
+           class="step" 
+           [class.completed]="step < currentStep()"
+           [class.active]="step === currentStep()">
+        <div class="step-circle">{{ step }}</div>
+        <div class="step-label">{{ getStepTitle(step) }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Alert -->
+  <div *ngIf="error()" class="alert alert-danger">
+    {{ error() }}
+  </div>
+
+  <!-- Step 1: Select Account -->
+  <div *ngIf="currentStep() === 1" class="step-content">
+    <h2 class="step-heading">Which account would you like to transfer from?</h2>
+    
+    <div *ngIf="loading()" class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading accounts...</p>
+    </div>
+
+    <div *ngIf="!loading()" class="account-list">
+      <div *ngFor="let account of accounts()" 
+           class="account-card"
+           [class.selected]="selectedAccount()?.id === account.id"
+           [class.disabled]="!canAccountBeSelected(account)"
+           (click)="canAccountBeSelected(account) && selectAccount(account)">
+        <div class="account-header">
+          <span class="account-type-badge">{{ account.accountType }}</span>
+          <span class="account-number">{{ maskAccountNumber(account.accountNumber) }}</span>
+        </div>
+        <div class="account-balance">
+          <div class="balance-item">
+            <span class="balance-label">Available Balance</span>
+            <span class="balance-amount">{{ formatCurrency(account.availableBalance) }}</span>
+          </div>
+          <div class="balance-item secondary">
+            <span class="balance-label">Current Balance</span>
+            <span class="balance-amount">{{ formatCurrency(account.balance) }}</span>
+          </div>
+        </div>
+        <div class="account-status">
+          <span *ngIf="canAccountBeSelected(account)" class="status-indicator success">✓ Available</span>
+          <span *ngIf="!canAccountBeSelected(account)" class="status-indicator error">⚠️ Unavailable</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-primary btn-lg" 
+              (click)="nextStep()" 
+              [disabled]="!canProceedToNextStep()">
+        Continue to Beneficiary Selection →
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 2: Select Beneficiary -->
+  <div *ngIf="currentStep() === 2" class="step-content">
+    <h2 class="step-heading">Who would you like to transfer to?</h2>
+
+    <!-- Search Bar -->
+    <div class="search-bar">
+      <input 
+        type="text" 
+        placeholder="Search by name, account number, or nickname"
+        (input)="filterBeneficiaries($any($event.target).value)"
+        class="search-input"
+      />
+    </div>
+
+    <!-- Add New Beneficiary Option -->
+    <div class="add-beneficiary-card" (click)="navigateToAddBeneficiary()">
+      <span class="add-icon">+</span>
+      <span>Add New Beneficiary</span>
+    </div>
+
+    <!-- Beneficiary List -->
+    <div class="beneficiary-list">
+      <div *ngFor="let beneficiary of filteredBeneficiaries(); trackBy: trackByBeneficiaryId"
+           class="beneficiary-card"
+           [class.selected]="isBeneficiarySelected(beneficiary)"
+           [class.disabled]="!canBeneficiaryBeSelected(beneficiary)"
+           [attr.title]="!canBeneficiaryBeSelected(beneficiary) ? 'This beneficiary is pending verification and cannot be used for transfers' : ''"
+           (click)="selectBeneficiary(beneficiary)">
+        <div class="radio-indicator">
+          <div class="radio-circle"></div>
+        </div>
+        <div class="beneficiary-info">
+          <div class="beneficiary-name">
+            {{ beneficiary.beneficiaryName }}
+            <span *ngIf="beneficiary.nickname" class="nickname">({{ beneficiary.nickname }})</span>
+            <span *ngIf="!canBeneficiaryBeSelected(beneficiary)" class="pending-indicator">🔒 Pending Approval</span>
+          </div>
+          <div class="beneficiary-details">
+            <span>{{ beneficiary.bankName }}</span>
+            <span class="separator">•</span>
+            <span>{{ maskAccountNumber(beneficiary.accountNumber) }}</span>
+          </div>
+          <div class="beneficiary-meta">
+            <span class="status-badge" [class.verified]="beneficiary.isVerified === true" [class.pending]="beneficiary.isVerified !== true">
+              {{ beneficiary.isVerified === true ? '✓ Verified' : '⏱ Pending Verification' }}
+            </span>
+            <span class="last-used">Last used: {{ beneficiary.lastUsedAt ? 'Recently' : 'Never' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Selected Beneficiary Summary -->
+    <div *ngIf="selectedBeneficiary()" class="selected-summary">
+      <h3>Selected Beneficiary</h3>
+      <div class="summary-details">
+        <div class="detail-row">
+          <span class="label">Name:</span>
+          <span class="value">{{ selectedBeneficiary()!.beneficiaryName }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Bank:</span>
+          <span class="value">{{ selectedBeneficiary()!.bankName }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Account:</span>
+          <span class="value">{{ selectedBeneficiary()!.accountNumber }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">IFSC:</span>
+          <span class="value">{{ selectedBeneficiary()!.ifscCode }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-secondary" (click)="previousStep()">← Back</button>
+      <button class="btn btn-primary btn-lg" 
+              (click)="nextStep()" 
+              [disabled]="!canProceedToNextStep()">
+        Continue to Amount →
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 3: Enter Amount -->
+  <div *ngIf="currentStep() === 3" class="step-content">
+    <h2 class="step-heading">How much would you like to transfer?</h2>
+
+    <!-- Amount Input -->
+    <div class="amount-input-section">
+      <div class="currency-symbol">₹</div>
+      <input 
+        type="number" 
+        class="amount-input"
+        placeholder="0.00"
+        [value]="transferAmount()"
+        (input)="onAmountChange($any($event.target).value)"
+        min="1"
+        max="200000"
+      />
+    </div>
+
+    <!-- Quick Amount Buttons -->
+    <div class="quick-amounts">
+      <button *ngFor="let amount of quickAmounts" 
+              class="quick-amount-btn"
+              (click)="setQuickAmount(amount)">
+        ₹{{ amount.toLocaleString('en-IN') }}
+      </button>
+    </div>
+
+    <!-- Charges Calculation -->
+    <div *ngIf="charges()" class="charges-card">
+      <h3>Charges Breakdown</h3>
+      <div class="charges-details">
+        <div class="charge-row">
+          <span>Transfer Amount:</span>
+          <span>{{ formatCurrency(charges()!.amount) }}</span>
+        </div>
+        <div class="charge-row">
+          <span>NEFT Charges:</span>
+          <span>{{ formatCurrency(charges()!.charges) }}</span>
+        </div>
+        <div class="charge-row">
+          <span>GST (18%):</span>
+          <span>{{ formatCurrency(charges()!.gst) }}</span>
+        </div>
+        <div class="charge-row total">
+          <span>Total Deduction:</span>
+          <span>{{ formatCurrency(charges()!.total) }}</span>
+        </div>
+        <div class="charge-row remaining" 
+             [class.low-balance]="remainingBalance < selectedAccount()!.minimumBalance">
+          <span>Remaining Balance:</span>
+          <span>{{ formatCurrency(remainingBalance) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Purpose -->
+    <div class="form-group">
+      <label class="form-label">Purpose of Transfer *</label>
+      <select class="form-control" [(ngModel)]="purpose">
+        <option value="">Select purpose</option>
+        <option *ngFor="let option of purposeOptions" [value]="option">{{ option }}</option>
+      </select>
+    </div>
+
+    <!-- Custom Purpose (if Other selected) -->
+    <div *ngIf="purpose() === 'Other'" class="form-group">
+      <label class="form-label">Specify Purpose *</label>
+      <input 
+        type="text" 
+        class="form-control" 
+        placeholder="Enter purpose"
+        [(ngModel)]="customPurpose"
+      />
+    </div>
+
+    <!-- Reference Number -->
+    <div class="form-group">
+      <label class="form-label">Reference Number (Optional)</label>
+      <input 
+        type="text" 
+        class="form-control" 
+        placeholder="Invoice number, PO number, etc."
+        [(ngModel)]="referenceNote"
+        maxlength="50"
+      />
+      <small class="form-help">For your records and beneficiary reference</small>
+    </div>
+
+    <!-- Remarks -->
+    <div class="form-group">
+      <label class="form-label">Remarks (Optional)</label>
+      <textarea 
+        class="form-control" 
+        rows="3"
+        placeholder="Add any additional notes"
+        [(ngModel)]="remarks"
+        maxlength="200"
+      ></textarea>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-secondary" (click)="previousStep()">← Back</button>
+      <button class="btn btn-primary btn-lg" 
+              (click)="nextStep()" 
+              [disabled]="!canProceedToNextStep()">
+        Review Transfer →
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 4: Review & Confirm -->
+  <div *ngIf="currentStep() === 4" class="step-content">
+    <h2 class="step-heading">Review Transfer Details</h2>
+    <p class="step-subheading">Please verify all details before confirming</p>
+
+    <div class="review-card">
+      <!-- Amount Section -->
+      <div class="review-section highlight">
+        <div class="amount-display">
+          <div class="amount-label">Transfer Amount</div>
+          <div class="amount-value">{{ formatCurrency(transferAmount()) }}</div>
+        </div>
+        <div class="section-content" *ngIf="charges()">
+          <div class="detail-row">
+            <span class="label">Transfer Amount:</span>
+            <span class="value">{{ formatCurrency(charges()?.amount || transferAmount()) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">NEFT Charges:</span>
+            <span class="value">{{ formatCurrency(charges()?.charges || 0) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">GST (18%):</span>
+            <span class="value">{{ formatCurrency(charges()?.gst || 0) }}</span>
+          </div>
+          <div class="detail-row total-row">
+            <span class="label"><strong>Total Deduction:</strong></span>
+            <span class="value"><strong>{{ formatCurrency(charges()?.total || 0) }}</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- From Account -->
+      <div class="review-section" *ngIf="selectedAccount()">
+        <h3 class="section-title">
+          From Account
+          <button class="edit-link" (click)="goToStep(1)">Edit</button>
+        </h3>
+        <div class="section-content">
+          <div class="detail-row">
+            <span class="label">Account Type:</span>
+            <span class="value">{{ selectedAccount()?.accountType || 'N/A' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Account Number:</span>
+            <span class="value">{{ selectedAccount()?.accountNumber || 'N/A' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Available Balance:</span>
+            <span class="value">{{ formatCurrency(selectedAccount()?.availableBalance || 0) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Balance After Transfer:</span>
+            <span class="value">{{ formatCurrency(remainingBalance) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- To Beneficiary -->
+      <div class="review-section" *ngIf="selectedBeneficiary()">
+        <h3 class="section-title">
+          To Beneficiary
+          <button class="edit-link" (click)="goToStep(2)">Edit</button>
+        </h3>
+        <div class="section-content">
+          <div class="detail-row">
+            <span class="label">Name:</span>
+            <span class="value">{{ selectedBeneficiary()?.beneficiaryName || 'N/A' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Bank:</span>
+            <span class="value">{{ selectedBeneficiary()?.bankName || 'N/A' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Account Number:</span>
+            <span class="value">{{ selectedBeneficiary()?.accountNumber || 'N/A' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">IFSC Code:</span>
+            <span class="value">{{ selectedBeneficiary()?.ifscCode || 'N/A' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transfer Details -->
+      <div class="review-section">
+        <h3 class="section-title">
+          Transfer Details
+          <button class="edit-link" (click)="goToStep(3)">Edit</button>
+        </h3>
+        <div class="section-content">
+          <div class="detail-row">
+            <span class="label">Purpose:</span>
+            <span class="value">{{ finalPurpose }}</span>
+          </div>
+          <div class="detail-row" *ngIf="referenceNote()">
+            <span class="label">Reference:</span>
+            <span class="value">{{ referenceNote() }}</span>
+          </div>
+          <div class="detail-row" *ngIf="remarks()">
+            <span class="label">Remarks:</span>
+            <span class="value">{{ remarks() }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Processing Info -->
+      <div class="review-section info">
+        <div class="info-box">
+          <div class="info-icon">ℹ️</div>
+          <div class="info-content">
+            <strong>NEFT Processing Information</strong>
+            <p>Your transfer will be processed in the next available NEFT batch (hourly during banking hours: 8 AM - 7 PM). Typically completed within 30 minutes after batch processing.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Terms & Conditions -->
+      <div class="terms-section">
+        <label class="checkbox-label">
+          <input type="checkbox" [(ngModel)]="termsAccepted" />
+          <span>I confirm that all details are correct and I authorize this transfer</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-secondary" (click)="previousStep()">← Back</button>
+      <button class="btn btn-primary btn-lg" 
+              (click)="submitTransfer()" 
+              [disabled]="!canProceedToNextStep() || submitting()">
+        <span *ngIf="!submitting()">Confirm Transfer</span>
+        <span *ngIf="submitting()">
+          <span class="spinner-small"></span> Processing...
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 5: Success -->
+  <div *ngIf="currentStep() === 5 && transferResponse()" class="step-content success-content">
+    <div class="success-icon">✓</div>
+    <h2 class="success-title">Transfer Initiated Successfully!</h2>
+    <p class="success-subtitle">Your NEFT transfer has been queued for processing</p>
+
+    <div class="success-details-card">
+      <div class="reference-number">
+        <span class="label">Reference Number</span>
+        <span class="value">{{ transferResponse().referenceNumber }}</span>
+        <button class="copy-btn" (click)="copyToClipboard(transferResponse().referenceNumber)">📋</button>
+      </div>
+
+      <div class="status-badge-large">Pending - Queued for Batch</div>
+
+      <div class="transfer-summary">
+        <div class="summary-row">
+          <span class="label">Amount:</span>
+          <span class="value">{{ formatCurrency(transferAmount()) }}</span>
+        </div>
+        <div class="summary-row">
+          <span class="label">To:</span>
+          <span class="value">{{ selectedBeneficiary()!.beneficiaryName }}</span>
+        </div>
+        <div class="summary-row">
+          <span class="label">Bank:</span>
+          <span class="value">{{ selectedBeneficiary()!.bankName }}</span>
+        </div>
+      </div>
+
+      <div class="what-next">
+        <h3>What Happens Next</h3>
+        <ol>
+          <li>Your transfer is now queued for the next NEFT batch</li>
+          <li>Amount has been debited from your account</li>
+          <li>You'll receive a confirmation once transfer is completed</li>
+          <li>SMS and email notifications will be sent</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="success-actions">
+      <button class="btn btn-primary" (click)="viewTransferStatus()">View Transfer Status</button>
+      <button class="btn btn-secondary" (click)="makeAnotherTransfer()">Make Another Transfer</button>
+      <button class="btn btn-link" (click)="goToDashboard()">Go to Dashboard</button>
+    </div>
+  </div>
+</div>
+

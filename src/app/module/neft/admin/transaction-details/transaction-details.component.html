@@ -1,0 +1,216 @@
+<div class="transaction-details-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="btn-back" (click)="backToTransactions()">
+        ← Back to Transactions
+      </button>
+      <div>
+        <h1 class="page-title">Transaction Details</h1>
+        <p class="page-subtitle" *ngIf="data">{{ data.eftReference }}</p>
+      </div>
+    </div>
+    <button class="btn btn-primary" (click)="loadTransactionDetails(eftReference())">
+      🔄 Refresh
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading transaction details...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error()" class="alert alert-danger">
+    {{ error() }}
+    <button class="btn btn-secondary" (click)="loadTransactionDetails(eftReference())">Retry</button>
+  </div>
+
+  <!-- Transaction Details Content -->
+  <div *ngIf="!loading() && !error() && data" class="transaction-details-content">
+    <!-- Status Header -->
+    <div class="status-header" [ngClass]="getStatusClass(data.status)">
+      <div class="status-icon">{{ getStatusIcon(data.status) }}</div>
+      <div class="status-info">
+        <h2>{{ data.status }}</h2>
+        <p *ngIf="data.failureReason" class="failure-reason">{{ data.failureReason }}</p>
+      </div>
+    </div>
+
+    <!-- Transaction Info Grid -->
+    <div class="info-grid">
+      <!-- Basic Information Card -->
+      <div class="info-card">
+        <h3>Transaction Information</h3>
+        <div class="info-row">
+          <span class="info-label">Reference Number:</span>
+          <span class="info-value monospace">{{ data.eftReference }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Transaction Type:</span>
+          <span class="info-value">{{ data.eftType }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Purpose:</span>
+          <span class="info-value">{{ data.purpose }}</span>
+        </div>
+        <div class="info-row" *ngIf="data.remarks">
+          <span class="info-label">Remarks:</span>
+          <span class="info-value">{{ data.remarks }}</span>
+        </div>
+        <div class="info-row" *ngIf="data.externalReference">
+          <span class="info-label">External Reference:</span>
+          <span class="info-value monospace">{{ data.externalReference }}</span>
+        </div>
+      </div>
+
+      <!-- Beneficiary Information Card -->
+      <div class="info-card">
+        <h3>Beneficiary Information</h3>
+        <div class="info-row">
+          <span class="info-label">Name:</span>
+          <span class="info-value">{{ data.beneficiaryName }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Account Number:</span>
+          <span class="info-value monospace">{{ data.beneficiaryAccountNumber }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">IFSC Code:</span>
+          <span class="info-value monospace">{{ data.beneficiaryIfsc }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Bank Name:</span>
+          <span class="info-value">{{ data.beneficiaryBankName }}</span>
+        </div>
+      </div>
+
+      <!-- Amount Information Card -->
+      <div class="info-card highlight">
+        <h3>Amount Details</h3>
+        <div class="info-row">
+          <span class="info-label">Transfer Amount:</span>
+          <span class="info-value amount">{{ formatCurrency(data.amount) }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Service Charges:</span>
+          <span class="info-value">{{ formatCurrency(data.charges) }}</span>
+        </div>
+        <div class="info-row total-row">
+          <span class="info-label">Total Amount:</span>
+          <span class="info-value total-amount">{{ formatCurrency(data.totalAmount) }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Currency:</span>
+          <span class="info-value">{{ data.currency }}</span>
+        </div>
+      </div>
+
+      <!-- Batch Information Card -->
+      <div class="info-card">
+        <h3>Batch Information</h3>
+        <div class="info-row">
+          <span class="info-label">Batch ID:</span>
+          <span class="info-value monospace">
+            {{ data.batchId || 'Not assigned' }}
+            <button 
+              *ngIf="data.batchId" 
+              class="btn btn-sm btn-link" 
+              (click)="viewBatchDetails()">
+              View Batch
+            </button>
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Batch Time:</span>
+          <span class="info-value">{{ formatTime(data.batchTime) }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Estimated Completion:</span>
+          <span class="info-value">{{ formatDateTime(data.estimatedCompletion) }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Actual Completion:</span>
+          <span class="info-value">{{ formatDateTime(data.actualCompletion) }}</span>
+        </div>
+      </div>
+
+      <!-- User Information Card -->
+      <div class="info-card">
+        <h3>User Information</h3>
+        <div class="info-row">
+          <span class="info-label">Initiated By:</span>
+          <span class="info-value">{{ data.initiatedBy }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Processed By:</span>
+          <span class="info-value">{{ data.processedBy || 'Not processed yet' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Created At:</span>
+          <span class="info-value">{{ formatDateTime(data.createdAt) }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Last Updated:</span>
+          <span class="info-value">{{ formatDateTime(data.updatedAt) }}</span>
+        </div>
+      </div>
+
+      <!-- Additional Information Card -->
+      <div class="info-card" *ngIf="data.status === 'FAILED'">
+        <h3>Failure Information</h3>
+        <div class="info-row">
+          <span class="info-label">Failure Reason:</span>
+          <span class="info-value text-danger">{{ data.failureReason || 'Not specified' }}</span>
+        </div>
+        <div class="info-note">
+          <p>⚠️ Failed transactions are automatically refunded to the source account.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline Section -->
+    <div class="timeline-section">
+      <h3>Transaction Timeline</h3>
+      <div class="timeline">
+        <div class="timeline-item completed">
+          <div class="timeline-marker">✓</div>
+          <div class="timeline-content">
+            <div class="timeline-title">Transaction Initiated</div>
+            <div class="timeline-time">{{ formatDateTime(data.createdAt) }}</div>
+            <div class="timeline-detail">Initiated by: {{ data.initiatedBy }}</div>
+          </div>
+        </div>
+
+        <div class="timeline-item" [ngClass]="data.batchId ? 'completed' : 'pending'">
+          <div class="timeline-marker">{{ data.batchId ? '✓' : '⏳' }}</div>
+          <div class="timeline-content">
+            <div class="timeline-title">Assigned to Batch</div>
+            <div class="timeline-time" *ngIf="data.batchId">{{ data.batchId }}</div>
+            <div class="timeline-detail" *ngIf="!data.batchId">Waiting for batch assignment</div>
+          </div>
+        </div>
+
+        <div class="timeline-item" [ngClass]="data.status === 'PROCESSING' || data.status === 'COMPLETED' || data.status === 'FAILED' ? 'completed' : 'pending'">
+          <div class="timeline-marker">{{ data.status === 'PROCESSING' || data.status === 'COMPLETED' || data.status === 'FAILED' ? '✓' : '⏳' }}</div>
+          <div class="timeline-content">
+            <div class="timeline-title">Processing</div>
+            <div class="timeline-time">{{ formatDateTime(data.estimatedCompletion) }}</div>
+            <div class="timeline-detail" *ngIf="data.processedBy">Processed by: {{ data.processedBy }}</div>
+          </div>
+        </div>
+
+        <div class="timeline-item" [ngClass]="data.status === 'COMPLETED' ? 'completed' : data.status === 'FAILED' ? 'failed' : 'pending'">
+          <div class="timeline-marker">{{ data.status === 'COMPLETED' ? '✓' : data.status === 'FAILED' ? '✗' : '⏳' }}</div>
+          <div class="timeline-content">
+            <div class="timeline-title">{{ data.status === 'COMPLETED' ? 'Completed Successfully' : data.status === 'FAILED' ? 'Failed' : 'Completion' }}</div>
+            <div class="timeline-time" *ngIf="data.actualCompletion">{{ formatDateTime(data.actualCompletion) }}</div>
+            <div class="timeline-detail" *ngIf="data.status === 'FAILED' && data.failureReason">{{ data.failureReason }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

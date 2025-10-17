@@ -3,82 +3,237 @@
     {
       "id": "dashboard",
       "label": "Dashboard",
-      "routerLink": "/dashboard",
+      "routerLink": "/dashboard/home",
       "icon": "🏠",
-      "roles": ["user","customer","admin","superadmin"],
+      "roles": ["customer"],
       "order": 1
     },
     {
       "id": "profile",
       "label": "Profile",
-      "routerLink": "/profile",
+      "routerLink": "/dashboard/profile",
       "icon": "👤",
-      "roles": ["user", "admin", "superadmin","customer"],
+      "roles": ["customer", "accountant", "admin", "superadmin"],
       "order": 2
     },
     {
-      "id": "accounts",
-      "label": "My Accounts",
-      "routerLink": "/accounts",
-      "icon": "💳",
-      "roles": ["admin", "superadmin","customer"],
-      "order": 3
-    },
-    {
-      "id": "transfers",
-      "label": "Transfers",
-      "routerLink": "/transfers",
-      "icon": "💸",
-      "roles": ["customer"],
-      "order": 4
-    },
-    {
       "id": "transactions",
-      "label": "Transaction History",
-      "routerLink": "/transactions",
+      "label": "Transactions",
+      "routerLink": "/dashboard/transactions",
       "icon": "📋",
+      "roles": ["customer", "accountant"],
+      "order": 5,
+      "hidden": true,
+      "children": [
+        {
+          "id": "transaction-history",
+          "label": "Transaction History",
+          "routerLink": "/dashboard/transactions/history",
+          "icon": "📊",
+          "roles": ["customer", "admin", "superadmin"]
+        },
+        {
+          "id": "new-transaction",
+          "label": "New Transaction",
+          "routerLink": "/dashboard/transactions/create",
+          "icon": "💳",
+          "roles": ["customer", "admin", "superadmin"]
+        },
+        {
+          "id": "bulk-upload",
+          "label": "Bulk Upload",
+          "routerLink": "/dashboard/transactions/bulk-upload",
+          "icon": "📤",
+          "roles": ["accountant", "admin", "superadmin"]
+        },
+        {
+          "id": "statements",
+          "label": "Statements",
+          "routerLink": "/dashboard/transactions/statements",
+          "icon": "📄",
+          "roles": ["customer","admin", "superadmin"]
+        }
+      ]
+    },
+    {
+      "id": "neft",
+      "label": "NEFT Transfers",
+      "routerLink": "/dashboard/neft/transfer",
+      "icon": "💳",
       "roles": ["customer"],
-      "order": 5
+      "order": 6,
+      "children": [
+        {
+          "id": "neft-beneficiaries",
+          "label": "My Beneficiaries",
+          "routerLink": "/dashboard/neft/beneficiaries",
+          "icon": "👥",
+          "roles": ["customer"]
+        },
+        {
+          "id": "neft-transfer",
+          "label": "New NEFT Transfer",
+          "routerLink": "/dashboard/neft/transfer",
+          "icon": "➡️",
+          "roles": ["customer"]
+        },
+        {
+          "id": "neft-history",
+          "label": "Transfer History",
+          "routerLink": "/dashboard/neft/history",
+          "icon": "📜",
+          "roles": ["customer"]
+        }
+      ]
+    },
+    {
+      "id": "rtgs",
+      "label": "RTGS Transfers",
+      "routerLink": "/dashboard/rtgs/transfer",
+      "icon": "⚡",
+      "roles": ["customer"],
+      "order": 7,
+      "children": [
+        {
+          "id": "rtgs-transfer",
+          "label": "New RTGS Transfer",
+          "routerLink": "/dashboard/rtgs/transfer",
+          "icon": "⚡",
+          "roles": ["customer"]
+        },
+        {
+          "id": "rtgs-history",
+          "label": "Transfer History",
+          "routerLink": "/dashboard/rtgs/history",
+          "icon": "📜",
+          "roles": ["customer"]
+        }
+      ]
+    },
+    {
+      "id": "qr-payment",
+      "label": "QR Payments",
+      "routerLink": "/dashboard/qr-payment/generate",
+      "icon": "📱",
+      "roles": ["customer"],
+      "order": 8,
+      "children": [
+        {
+          "id": "qr-generate",
+          "label": "Generate QR Code",
+          "routerLink": "/dashboard/qr-payment/generate",
+          "icon": "📲",
+          "roles": ["customer"]
+        },
+        {
+          "id": "qr-scan",
+          "label": "Pay via QR Code",
+          "routerLink": "/dashboard/qr-payment/scan",
+          "icon": "📷",
+          "roles": ["customer"]
+        },
+        {
+          "id": "qr-history",
+          "label": "QR Payment History",
+          "routerLink": "/dashboard/qr-payment/history",
+          "icon": "📜",
+          "roles": ["customer"]
+        }
+      ]
+    },
+    {
+      "id": "upi-payment",
+      "label": "UPI Payments",
+      "routerLink": "/dashboard/upi-payment/pay",
+      "icon": "💰",
+      "roles": ["customer"],
+      "order": 9,
+      "children": [
+        {
+          "id": "upi-manage",
+          "label": "Manage UPI IDs",
+          "routerLink": "/dashboard/upi-payment/manage",
+          "icon": "🔧",
+          "roles": ["customer"]
+        },
+        {
+          "id": "upi-pay",
+          "label": "Make UPI Payment",
+          "routerLink": "/dashboard/upi-payment/pay",
+          "icon": "💳",
+          "roles": ["customer"]
+        },
+        {
+          "id": "upi-history",
+          "label": "UPI Payment History",
+          "routerLink": "/dashboard/upi-payment/history",
+          "icon": "📜",
+          "roles": ["customer"]
+        }
+      ]
     },
     {
       "id": "admin-dashboard",
       "label": "Admin Dashboard",
-      "routerLink": "/admin-dashboard",
-      "icon": "⚙️",
+      "routerLink": "/dashboard/admin",
+      "icon": "🛠️",
       "roles": ["admin", "superadmin"],
-      "order": 10
+      "order": 1
     },
     {
-      "id": "user-management",
-      "label": "User Management",
-      "routerLink": "/user-management",
-      "icon": "👥",
+      "id": "admin-neft",
+      "label": "NEFT Management",
+      "routerLink": "/dashboard/admin-neft/dashboard",
+      "icon": "💳",
       "roles": ["admin", "superadmin"],
-      "order": 11
+      "order": 10,
+      "children": [
+        {
+          "id": "admin-neft-dashboard",
+          "label": "NEFT Dashboard",
+          "routerLink": "/dashboard/admin-neft/dashboard",
+          "icon": "📊",
+          "roles": ["admin", "superadmin"]
+        },
+        {
+          "id": "admin-neft-batches",
+          "label": "Batch Management",
+          "routerLink": "/dashboard/admin-neft/batches",
+          "icon": "📦",
+          "roles": ["admin", "superadmin"]
+        },
+        {
+          "id": "admin-neft-transactions",
+          "label": "All Transactions",
+          "routerLink": "/dashboard/admin-neft/transactions",
+          "icon": "📋",
+          "roles": ["admin", "superadmin"]
+        }
+      ]
     },
     {
-      "id": "reports",
-      "label": "Reports",
-      "routerLink": "/reports",
-      "icon": "📊",
+      "id": "admin-rtgs",
+      "label": "RTGS Management",
+      "routerLink": "/dashboard/admin-rtgs/dashboard",
+      "icon": "⚡",
       "roles": ["admin", "superadmin"],
-      "order": 12
-    },
-    {
-      "id": "system-settings",
-      "label": "System Settings",
-      "routerLink": "/system-settings",
-      "icon": "🔧",
-      "roles": ["superadmin"],
-      "order": 20
-    },
-    {
-      "id": "audit-logs",
-      "label": "Audit Logs",
-      "routerLink": "/audit-logs",
-      "icon": "📝",
-      "roles": ["superadmin"],
-      "order": 21
+      "order": 11,
+      "children": [
+        {
+          "id": "admin-rtgs-dashboard",
+          "label": "RTGS Dashboard",
+          "routerLink": "/dashboard/admin-rtgs/dashboard",
+          "icon": "📊",
+          "roles": ["admin", "superadmin"]
+        },
+        {
+          "id": "admin-rtgs-transactions",
+          "label": "All Transactions",
+          "routerLink": "/dashboard/admin-rtgs/transactions",
+          "icon": "📋",
+          "roles": ["admin", "superadmin"]
+        }
+      ]
     }
   ]
 }

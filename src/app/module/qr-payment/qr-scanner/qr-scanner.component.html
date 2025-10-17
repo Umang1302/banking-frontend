@@ -1,0 +1,202 @@
+<div class="qr-scanner-container">
+  <div class="page-header">
+    <h1>Pay via QR Code</h1>
+    <p>Upload or scan a QR code to make payment</p>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error()" class="alert alert-danger">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="8" x2="12" y2="12"></line>
+      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+    </svg>
+    <span>{{ error() }}</span>
+  </div>
+
+  <!-- Step 1: Upload QR Code -->
+  <div *ngIf="currentStep() === 'upload'" class="upload-card">
+    <h2>Upload QR Code</h2>
+
+    <!-- File Upload Area -->
+    <div class="upload-area" [class.has-file]="uploadedQRFile()">
+      <input 
+        type="file" 
+        id="qr-file" 
+        accept="image/*"
+        (change)="onFileSelected($event)"
+        class="file-input">
+      
+      <label for="qr-file" class="upload-label">
+        <div *ngIf="!qrImagePreview()" class="upload-placeholder">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+          <h3>Click to upload QR code</h3>
+          <p>or drag and drop</p>
+          <span>PNG, JPG, JPEG up to 5MB</span>
+        </div>
+
+        <div *ngIf="qrImagePreview()" class="upload-preview">
+          <img [src]="qrImagePreview()" alt="QR Code Preview">
+          <button type="button" class="change-btn" (click)="uploadedQRFile.set(null); qrImagePreview.set(null); $event.preventDefault()">
+            Change Image
+          </button>
+        </div>
+      </label>
+    </div>
+
+    <!-- Parse Button -->
+    <div class="form-actions">
+      <button 
+        type="button"
+        class="btn btn-primary"
+        (click)="parseQRCode()"
+        [disabled]="!uploadedQRFile() || parsing()">
+        <span *ngIf="!parsing()">Parse QR Code</span>
+        <span *ngIf="parsing()">
+          <span class="spinner"></span>
+          Parsing...
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 2: Review Payment Details -->
+  <div *ngIf="currentStep() === 'review' && parsedQRData()" class="review-card">
+    <h2>Review Payment Details</h2>
+
+    <!-- Warning if QR expired -->
+    <div *ngIf="isQRExpired()" class="alert alert-warning">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+        <line x1="12" y1="9" x2="12" y2="13"></line>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
+      <span>This QR code has expired!</span>
+    </div>
+
+    <!-- QR Code Preview -->
+    <div class="qr-preview">
+      <img [src]="qrImagePreview()" alt="QR Code">
+    </div>
+
+    <!-- Payment Details -->
+    <div class="payment-details">
+      <div class="detail-section">
+        <h3>Receiver Information</h3>
+        <div class="detail-row">
+          <span>Name:</span>
+          <strong>{{ parsedQRData()!.receiverName }}</strong>
+        </div>
+        <div class="detail-row">
+          <span>Account Number:</span>
+          <strong>{{ parsedQRData()!.receiverAccountNumber }}</strong>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h3>Payment Information</h3>
+        <div class="detail-row">
+          <span>Amount:</span>
+          <strong class="amount">{{ formatAmount(parsedQRData()!.amount || 0) }}</strong>
+        </div>
+        <div class="detail-row" *ngIf="parsedQRData()!.description">
+          <span>Description:</span>
+          <strong>{{ parsedQRData()!.description }}</strong>
+        </div>
+        <div class="detail-row">
+          <span>Request ID:</span>
+          <strong class="request-id">{{ parsedQRData()!.requestId }}</strong>
+        </div>
+        <div class="detail-row">
+          <span>Expires At:</span>
+          <strong [class.expired]="isQRExpired()">
+            {{ formatDateTime(parsedQRData()!.expiresAt || '') }}
+          </strong>
+        </div>
+      </div>
+
+      <!-- Payer Account Selection -->
+      <div class="detail-section">
+        <h3>Payment From</h3>
+        <div class="form-group">
+          <label for="payer-account">Select Your Account *</label>
+          <select 
+            id="payer-account" 
+            [(ngModel)]="selectedPayerAccount" 
+            class="form-control">
+            <option value="">Select an account</option>
+            <option *ngFor="let account of accounts()" [value]="account.accountNumber">
+              {{ account.accountNumber }} - {{ account.accountType }} 
+              (₹{{ account.balance | number:'1.2-2' }})
+            </option>
+          </select>
+        </div>
+
+        <!-- Selected Account Info -->
+        <div *ngIf="getSelectedAccount()" class="account-info">
+          <div class="info-row">
+            <span>Available Balance:</span>
+            <strong>{{ formatAmount(getSelectedAccount().balance) }}</strong>
+          </div>
+          <div class="info-row" *ngIf="parsedQRData()!.amount">
+            <span>Balance After Payment:</span>
+            <strong>{{ formatAmount(getSelectedAccount().balance - (parsedQRData()!.amount || 0)) }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="form-actions">
+      <button 
+        type="button"
+        class="btn btn-secondary"
+        (click)="goBack()">
+        Back
+      </button>
+      <button 
+        type="button"
+        class="btn btn-primary"
+        (click)="initiatePayment()"
+        [disabled]="!selectedPayerAccount() || isQRExpired() || processing()">
+        <span *ngIf="!processing()">Proceed to Pay</span>
+        <span *ngIf="processing()">
+          <span class="spinner"></span>
+          Processing...
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 3: Processing -->
+  <div *ngIf="currentStep() === 'processing'" class="processing-card">
+    <div class="processing-icon">
+      <div class="spinner-large"></div>
+    </div>
+    <h2>Processing Payment</h2>
+    <p>Please wait while we process your internal bank transfer...</p>
+  </div>
+</div>
+
+<!-- Payment Success/Failure Modal -->
+<app-payment-modal
+  [isOpen]="showPaymentModal()"
+  [isSuccess]="paymentSuccess()"
+  [message]="paymentMessage()"
+  [transactionReference]="paymentResponse()?.transactionReference || ''"
+  [amount]="paymentResponse()?.amount || 0"
+  [currency]="paymentResponse()?.currency || 'INR'"
+  [receiverName]="paymentResponse()?.receiverName || ''"
+  [payerBalanceBefore]="paymentResponse()?.payerBalanceBefore || 0"
+  [payerBalanceAfter]="paymentResponse()?.payerBalanceAfter || 0"
+  [paidAt]="paymentResponse()?.paidAt || ''"
+  [paymentType]="'QR'"
+  (close)="closePaymentModal()"
+  (downloadReceipt)="downloadReceipt()"
+  (viewTransaction)="viewTransaction()">
+</app-payment-modal>
+

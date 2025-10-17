@@ -3,18 +3,49 @@
   <header class="dashboard-header">
     <div class="header-left">
       <h1 class="dashboard-title">
-        <span class="logo-icon" style="font-style: normal !important;">🏦</span>
-        Nedbank
+        <span class="logo-icon" style="font-style: normal !important;"></span>
+        BankOfPeople
       </h1>
     </div>
     
     <nav class="header-nav">
       <ul class="nav-menu">
-        <li class="nav-item" *ngFor="let navItem of navigationItems">
-          <a [routerLink]="navItem.routerLink" class="nav-link" routerLinkActive="active">
+        <li class="nav-item" *ngFor="let navItem of navigationItems; let i = index" 
+            [class.has-children]="navItem.children && navItem.children.length > 0">
+          
+          <!-- Navigation item without children -->
+          <a *ngIf="!navItem.children || navItem.children.length === 0"
+             [routerLink]="navItem.routerLink" 
+             class="nav-link" 
+             routerLinkActive="active">
             <span class="nav-icon" style="font-style: normal !important;">{{ navItem.icon }}</span>
             {{ navItem.label }}
           </a>
+          
+          <!-- Navigation item with children (dropdown) -->
+          <div *ngIf="navItem.children && navItem.children.length > 0" 
+               class="nav-dropdown"
+               [class.dropdown-open]="isDropdownOpen(i)">
+            <button type="button"
+                    class="nav-link dropdown-toggle" 
+                    [class.active]="isAnyChildActive(navItem.children)"
+                    (click)="toggleDropdown(i, $event)">
+              <span class="nav-icon" style="font-style: normal !important;">{{ navItem.icon }}</span>
+              {{ navItem.label }}
+              <span class="dropdown-arrow" [class.rotate]="isDropdownOpen(i)">▼</span>
+            </button>
+            <ul class="dropdown-menu" [class.show]="isDropdownOpen(i)">
+              <li *ngFor="let child of navItem.children">
+                <a [routerLink]="child.routerLink" 
+                   class="dropdown-link" 
+                   routerLinkActive="active"
+                   (click)="closeDropdown()">
+                  <span class="nav-icon" style="font-style: normal !important;">{{ child.icon }}</span>
+                  {{ child.label }}
+                </a>
+              </li>
+            </ul>
+          </div>
         </li>
       </ul>
     </nav>
@@ -40,7 +71,7 @@
   </header>
 
   <main class="dashboard-main">
+    <!-- Child routes render here -->
     <router-outlet></router-outlet>
-    
   </main>
 </div>

@@ -1,0 +1,374 @@
+.transaction-details-container {
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  gap: 1rem;
+}
+
+.btn-back,
+.btn-print {
+  background: white;
+  border: 2px solid #e0e0e0;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+
+.btn-back:hover {
+  border-color: #ff6b35;
+  color: #ff6b35;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-print:hover {
+  border-color: #4CAF50;
+  color: #4CAF50;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.loading-state,
+.error-state {
+  text-align: center;
+  padding: 3rem;
+  background: white;
+  border-radius: 12px;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f0f0f0;
+  border-top-color: #ff6b35;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Receipt Styles */
+.receipt-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.receipt {
+  background: white;
+  width: 100%;
+  max-width: 700px;
+  padding: 3rem 2.5rem;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Receipt Header */
+.receipt-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.bank-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.logo-icon {
+  font-size: 3rem;
+}
+
+.bank-logo h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0;
+  color: #1a1a1a;
+  letter-spacing: 2px;
+}
+
+.receipt-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #666;
+  letter-spacing: 3px;
+  margin: 0.5rem 0;
+}
+
+.transaction-type-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.5rem 1.5rem;
+  border-radius: 25px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  margin-top: 0.5rem;
+}
+
+/* Receipt Dividers */
+.receipt-divider {
+  border-top: 2px dashed #ddd;
+  margin: 1.5rem 0;
+}
+
+.receipt-divider-thin {
+  border-top: 1px solid #e0e0e0;
+  margin: 1rem 0;
+}
+
+/* Receipt Sections */
+.receipt-section {
+  margin: 1.5rem 0;
+}
+
+.section-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #666;
+  letter-spacing: 1.5px;
+  margin: 0 0 1rem 0;
+  text-transform: uppercase;
+}
+
+/* Reference Section */
+.reference-section {
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.reference-label {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.reference-value {
+  font-family: 'Courier New', monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0.5rem 0 1rem 0;
+  word-break: break-all;
+}
+
+/* Receipt Rows with Dotted Lines */
+.receipt-row {
+  display: flex;
+  align-items: baseline;
+  margin: 0.75rem 0;
+  line-height: 1.6;
+}
+
+.row-label {
+  font-size: 0.95rem;
+  color: #555;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.row-dots {
+  flex: 1;
+  border-bottom: 2px dotted #ddd;
+  margin: 0 0.5rem;
+  min-width: 20px;
+  height: 0.9rem;
+}
+
+.row-value {
+  font-size: 0.95rem;
+  color: #1a1a1a;
+  font-weight: 600;
+  text-align: right;
+  white-space: normal;
+  max-width: 60%;
+  word-break: break-word;
+}
+
+.remarks-text,
+.failure-text {
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.failure-text {
+  color: #d32f2f;
+}
+
+/* Amount Section */
+.amount-section {
+  background: #f9f9f9;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin: 2rem 0;
+}
+
+.total-row {
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+
+.total-row .row-label {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  letter-spacing: 1px;
+}
+
+.total-amount {
+  font-size: 1.75rem !important;
+  font-weight: 800 !important;
+  color: #ff6b35 !important;
+}
+
+/* Status Badge */
+.status-badge {
+  display: inline-block;
+  padding: 0.5rem 1.25rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 0.5rem;
+}
+
+.status-success {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: white;
+}
+
+.status-info {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+}
+
+.status-danger {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+.status-warning {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  color: #333;
+}
+
+/* Receipt Footer */
+.receipt-footer {
+  text-align: center;
+  padding-top: 1.5rem;
+  margin-top: 1.5rem;
+  border-top: 2px dashed #ddd;
+}
+
+.footer-text {
+  font-size: 0.85rem;
+  color: #888;
+  margin: 0.25rem 0;
+  line-height: 1.5;
+}
+
+.footer-id {
+  font-size: 0.8rem;
+  color: #aaa;
+  margin-top: 1rem;
+  font-family: 'Courier New', monospace;
+}
+
+.footer-timestamp {
+  font-size: 0.8rem;
+  color: #aaa;
+  margin-top: 0.25rem;
+}
+
+/* Print Styles */
+@media print {
+  body {
+    background: white;
+  }
+
+  .transaction-details-container {
+    background: white;
+    padding: 0;
+  }
+
+  .page-header {
+    display: none;
+  }
+
+  .receipt {
+    border: 2px solid #000;
+    box-shadow: none;
+    max-width: 100%;
+    page-break-inside: avoid;
+  }
+
+  .receipt-divider {
+    border-top-color: #000;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .transaction-details-container {
+    padding: 1rem;
+  }
+
+  .receipt {
+    padding: 2rem 1.5rem;
+  }
+
+  .bank-logo h1 {
+    font-size: 1.5rem;
+  }
+
+  .reference-value {
+    font-size: 1.2rem;
+  }
+
+  .receipt-row {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .row-dots {
+    display: none;
+  }
+
+  .row-value {
+    text-align: left;
+    max-width: 100%;
+  }
+
+  .total-amount {
+    font-size: 1.5rem !important;
+  }
+
+  .page-header {
+    flex-direction: column;
+  }
+}
+

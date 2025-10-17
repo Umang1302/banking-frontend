@@ -1,0 +1,184 @@
+<div class="transaction-details-container">
+  <div class="page-header">
+    <button class="btn-back" (click)="goBack()">← Back</button>
+    <button class="btn-print" onclick="window.print()">🖨️ Print Receipt</button>
+  </div>
+
+  <div *ngIf="loading()" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading transaction details...</p>
+  </div>
+
+  <div *ngIf="error()" class="error-state">
+    <p class="error-message">{{ error() }}</p>
+    <button class="btn btn-secondary" (click)="loadTransactionDetails(reference())">Retry</button>
+  </div>
+
+  <div *ngIf="!loading() && !error() && transactionDetails()" class="receipt-wrapper">
+    <div class="receipt">
+      <!-- Receipt Header -->
+      <div class="receipt-header">
+        <div class="bank-logo">
+          <div class="logo-icon">🏦</div>
+          <h1>NEDBANK</h1>
+        </div>
+        <div class="receipt-title">TRANSACTION RECEIPT</div>
+        <div class="transaction-type-badge rtgs">
+          {{ transactionDetails().eftType || 'RTGS' }}
+        </div>
+      </div>
+
+      <div class="receipt-divider"></div>
+
+      <!-- Transaction Reference -->
+      <div class="receipt-section reference-section">
+        <div class="reference-label">Transaction Reference</div>
+        <div class="reference-value">{{ transactionDetails().eftReference }}</div>
+        <div class="status-badge" [ngClass]="getStatusClass(transactionDetails().status)">
+          {{ transactionDetails().status }}
+        </div>
+      </div>
+
+      <div class="receipt-divider"></div>
+
+      <!-- From Account -->
+      <div class="receipt-section">
+        <h3 class="section-title">FROM</h3>
+        <div class="receipt-row">
+          <span class="row-label">Initiated By</span>
+          <span class="row-dots"></span>
+          <span class="row-value">{{ transactionDetails().initiatedBy }}</span>
+        </div>
+        <div class="receipt-row" *ngIf="transactionDetails().sourceAccount?.accountNumber">
+          <span class="row-label">Account Number</span>
+          <span class="row-dots"></span>
+          <span class="row-value">{{ transactionDetails().sourceAccount?.accountNumber }}</span>
+        </div>
+        <div class="receipt-row" *ngIf="transactionDetails().sourceAccount?.customer">
+          <span class="row-label">Account Holder</span>
+          <span class="row-dots"></span>
+          <span class="row-value">{{ transactionDetails().sourceAccount?.customer?.firstName }} {{ transactionDetails().sourceAccount?.customer?.lastName }}</span>
+        </div>
+      </div>
+
+      <div class="receipt-divider"></div>
+
+      <!-- To Beneficiary -->
+      <div class="receipt-section">
+        <h3 class="section-title">TO</h3>
+        <div class="receipt-row">
+          <span class="row-label">Beneficiary Name</span>
+          <span class="row-dots"></span>
+          <span class="row-value">{{ transactionDetails().beneficiaryName }}</span>
+        </div>
+        <div class="receipt-row">
+          <span class="row-label">Account Number</span>
+          <span class="row-dots"></span>
+          <span class="row-value">{{ transactionDetails().beneficiaryAccountNumber }}</span>
+        </div>
+        <div class="receipt-row">
+          <span class="row-label">Bank Name</span>
+          <span class="row-dots"></span>
+          <span class="row-value">{{ transactionDetails().beneficiaryBankName }}</span>
+        </div>
+        <div class="receipt-row">
+          <span class="row-label">IFSC Code</span>
+          <span class="row-dots"></span>
+          <span class="row-value">{{ transactionDetails().beneficiaryIfsc }}</span>
+        </div>
+      </div>
+
+      <div class="receipt-divider"></div>
+
+      <!-- Transaction Details -->
+      <div class="receipt-section">
+        <h3 class="section-title">TRANSACTION DETAILS</h3>
+        <div class="receipt-row">
+          <span class="row-label">Purpose</span>
+          <span class="row-dots"></span>
+          <span class="row-value">{{ transactionDetails().purpose }}</span>
+        </div>
+        <div class="receipt-row" *ngIf="transactionDetails().remarks">
+          <span class="row-label">Remarks</span>
+          <span class="row-dots"></span>
+          <span class="row-value remarks-text">{{ transactionDetails().remarks }}</span>
+        </div>
+        <div class="receipt-row">
+          <span class="row-label">Currency</span>
+          <span class="row-dots"></span>
+          <span class="row-value">{{ transactionDetails().currency }}</span>
+        </div>
+        <div class="receipt-row" *ngIf="transactionDetails().externalReference">
+          <span class="row-label">External Reference</span>
+          <span class="row-dots"></span>
+          <span class="row-value">{{ transactionDetails().externalReference }}</span>
+        </div>
+      </div>
+
+      <div class="receipt-divider"></div>
+
+      <!-- Amount Breakdown -->
+      <div class="receipt-section amount-section">
+        <h3 class="section-title">AMOUNT BREAKDOWN</h3>
+        <div class="receipt-row">
+          <span class="row-label">Transfer Amount</span>
+          <span class="row-dots"></span>
+          <span class="row-value">{{ formatCurrency(transactionDetails().amount) }}</span>
+        </div>
+        <div class="receipt-row">
+          <span class="row-label">Processing Charges</span>
+          <span class="row-dots"></span>
+          <span class="row-value">{{ formatCurrency(transactionDetails().charges) }}</span>
+        </div>
+        <div class="receipt-divider-thin"></div>
+        <div class="receipt-row total-row">
+          <span class="row-label">TOTAL AMOUNT</span>
+          <span class="row-value total-amount">{{ formatCurrency(transactionDetails().totalAmount) }}</span>
+        </div>
+      </div>
+
+      <div class="receipt-divider"></div>
+
+      <!-- Timeline -->
+      <div class="receipt-section">
+        <h3 class="section-title">TIMELINE</h3>
+        <div class="receipt-row">
+          <span class="row-label">Transaction Initiated</span>
+          <span class="row-dots"></span>
+          <span class="row-value">{{ formatDateTime(transactionDetails().createdAt) }}</span>
+        </div>
+        <div class="receipt-row" *ngIf="transactionDetails().estimatedCompletion">
+          <span class="row-label">Estimated Completion</span>
+          <span class="row-dots"></span>
+          <span class="row-value">{{ formatDateTime(transactionDetails().estimatedCompletion) }}</span>
+        </div>
+        <div class="receipt-row" *ngIf="transactionDetails().actualCompletion">
+          <span class="row-label">Completed On</span>
+          <span class="row-dots"></span>
+          <span class="row-value">{{ formatDateTime(transactionDetails().actualCompletion) }}</span>
+        </div>
+        <div class="receipt-row">
+          <span class="row-label">Processed By</span>
+          <span class="row-dots"></span>
+          <span class="row-value">{{ transactionDetails().processedBy }}</span>
+        </div>
+        <div class="receipt-row" *ngIf="transactionDetails().failureReason">
+          <span class="row-label">Failure Reason</span>
+          <span class="row-dots"></span>
+          <span class="row-value failure-text">{{ transactionDetails().failureReason }}</span>
+        </div>
+      </div>
+
+      <div class="receipt-divider"></div>
+
+      <!-- Receipt Footer -->
+      <div class="receipt-footer">
+        <p class="footer-text">This is a computer generated receipt and does not require a signature.</p>
+        <p class="footer-text">For any queries, please contact our customer support.</p>
+        <div class="footer-id">Transaction ID: {{ transactionDetails().id }}</div>
+        <div class="footer-timestamp">Generated on: {{ getCurrentDateTime() }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+

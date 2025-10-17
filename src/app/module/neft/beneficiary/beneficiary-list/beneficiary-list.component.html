@@ -1,0 +1,271 @@
+<div class="beneficiary-list-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">My Beneficiaries</h1>
+      <p class="page-subtitle">Manage your saved beneficiaries for quick transfers</p>
+    </div>
+    <button class="btn btn-primary" (click)="navigateToAddBeneficiary()">
+      <span class="icon">+</span> Add New Beneficiary
+    </button>
+  </div>
+
+  <!-- Search and Filter Bar -->
+  <div class="filter-bar">
+    <div class="search-box">
+      <input 
+        type="text" 
+        placeholder="Search beneficiaries by name or account number"
+        [value]="searchTerm()"
+        (input)="onSearchChange($event)"
+        class="search-input"
+      />
+    </div>
+    <div class="filter-group">
+      <select 
+        [value]="statusFilter()" 
+        (change)="onStatusFilterChange($event)"
+        class="filter-select"
+      >
+        <option value="ALL">All Beneficiaries ({{ beneficiaries().length }})</option>
+        <option value="ACTIVE">Active Only ({{ getActiveCount() }})</option>
+        <option value="VERIFIED">✓ Verified Only ({{ getVerifiedCount() }})</option>
+        <option value="PENDING">⏱ Pending Verification ({{ getPendingCount() }})</option>
+        <option value="BLOCKED">🚫 Blocked ({{ getBlockedCount() }})</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading beneficiaries...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error()" class="error-state">
+    <p class="error-message">{{ error() }}</p>
+    <button class="btn btn-secondary" (click)="loadBeneficiaries()">Retry</button>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading() && !error() && filteredBeneficiaries().length === 0" class="empty-state">
+    <div class="empty-illustration">👤</div>
+    <h3>No beneficiaries found</h3>
+    <p>Add beneficiaries to make quick NEFT transfers</p>
+    <button class="btn btn-primary btn-large" (click)="navigateToAddBeneficiary()">
+      + Add Beneficiary
+    </button>
+  </div>
+
+  <!-- Beneficiary Cards Grid -->
+  <div *ngIf="!loading() && !error() && filteredBeneficiaries().length > 0" class="beneficiary-grid">
+    <div *ngFor="let beneficiary of filteredBeneficiaries()" class="beneficiary-card">
+      <!-- Card Header -->
+      <div class="card-header">
+        <div class="header-left">
+          <h3 class="beneficiary-name">{{ beneficiary.beneficiaryName }}</h3>
+          <span *ngIf="beneficiary.nickname" class="nickname-badge">{{ beneficiary.nickname }}</span>
+        </div>
+        <span 
+          class="status-badge"
+          [ngClass]="getStatusBadgeClass(beneficiary)"
+        >
+          {{ getVerificationLabel(beneficiary) }}
+        </span>
+      </div>
+
+      <!-- Card Body -->
+      <div class="card-body">
+        <div class="info-row">
+          <span class="info-label">Bank:</span>
+          <span class="info-value">{{ beneficiary.bankName }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Branch:</span>
+          <span class="info-value">{{ beneficiary.branchName }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Account:</span>
+          <div class="account-number-group">
+            <span class="info-value">{{ maskAccountNumber(beneficiary.accountNumber, beneficiary.id!) }}</span>
+            <button 
+              class="icon-btn" 
+              (click)="toggleAccountVisibility(beneficiary.id!)"
+              title="Show/Hide account number"
+            >
+              👁️
+            </button>
+            <button 
+              class="icon-btn" 
+              (click)="copyToClipboard(beneficiary.accountNumber)"
+              title="Copy account number"
+            >
+              📋
+            </button>
+          </div>
+        </div>
+        <div class="info-row">
+          <span class="info-label">IFSC:</span>
+          <div class="account-number-group">
+            <span class="info-value">{{ beneficiary.ifscCode }}</span>
+            <button 
+              class="icon-btn" 
+              (click)="copyToClipboard(beneficiary.ifscCode)"
+              title="Copy IFSC code"
+            >
+              📋
+            </button>
+          </div>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Last used:</span>
+          <span class="info-value text-muted">{{ getRelativeTime(beneficiary.lastUsedAt) }}</span>
+        </div>
+      </div>
+
+      <!-- Card Footer -->
+      <div class="card-footer">
+        <button 
+          *ngIf="beneficiary.isVerified === true && beneficiary.status !== 'BLOCKED'"
+          class="btn btn-primary btn-sm"
+          (click)="navigateToTransfer(beneficiary)"
+        >
+          Transfer Now
+        </button>
+        <button 
+          class="btn btn-secondary btn-sm"
+          (click)="navigateToEdit(beneficiary)"
+          [disabled]="beneficiary.status === 'BLOCKED'"
+        >
+          Edit
+        </button>
+        <button 
+          class="btn btn-danger btn-sm"
+          (click)="openDeleteModal(beneficiary)"
+          [disabled]="beneficiary.status === 'BLOCKED'"
+        >
+          Delete
+        </button>
+        <button 
+          class="btn btn-link btn-sm"
+          (click)="openDetailsModal(beneficiary)"
+        >
+          Details
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div *ngIf="showDeleteModal()" class="modal-overlay" (click)="closeDeleteModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>⚠️ Delete Beneficiary?</h3>
+        <button class="close-btn" (click)="closeDeleteModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to remove <strong>{{ selectedBeneficiary()?.beneficiaryName }}</strong>?</p>
+        <div class="beneficiary-details">
+          <p><strong>Account:</strong> {{ maskAccountNumber(selectedBeneficiary()?.accountNumber || '', selectedBeneficiary()?.id || '') }}</p>
+          <p><strong>Bank:</strong> {{ selectedBeneficiary()?.bankName }}</p>
+        </div>
+        <p class="warning-text">You can add them again later if needed.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeDeleteModal()">Cancel</button>
+        <button class="btn btn-danger" (click)="confirmDelete()">Yes, Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Details Modal -->
+  <div *ngIf="showDetailsModal()" class="modal-overlay" (click)="closeDetailsModal()">
+    <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Beneficiary Details</h3>
+        <button class="close-btn" (click)="closeDetailsModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="details-section">
+          <h4>Beneficiary Information</h4>
+          <div class="details-grid">
+            <div class="detail-item">
+              <span class="detail-label">Name:</span>
+              <span class="detail-value">{{ selectedBeneficiary()?.beneficiaryName || 'N/A' }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedBeneficiary()?.nickname">
+              <span class="detail-label">Nickname:</span>
+              <span class="detail-value">{{ selectedBeneficiary()?.nickname }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="details-section">
+          <h4>Bank Details</h4>
+          <div class="details-grid">
+            <div class="detail-item" *ngIf="selectedBeneficiary()?.accountNumber">
+              <span class="detail-label">Account Number:</span>
+              <span class="detail-value">{{ selectedBeneficiary()?.accountNumber }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedBeneficiary()?.ifscCode">
+              <span class="detail-label">IFSC Code:</span>
+              <span class="detail-value">{{ selectedBeneficiary()?.ifscCode }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedBeneficiary()?.bankName">
+              <span class="detail-label">Bank Name:</span>
+              <span class="detail-value">{{ selectedBeneficiary()?.bankName }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="details-section" *ngIf="selectedBeneficiary()?.mobile || selectedBeneficiary()?.email">
+          <h4>Contact Information</h4>
+          <div class="details-grid">
+            <div class="detail-item" *ngIf="selectedBeneficiary()?.mobile">
+              <span class="detail-label">Mobile:</span>
+              <span class="detail-value">{{ selectedBeneficiary()?.mobile }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedBeneficiary()?.email">
+              <span class="detail-label">Email:</span>
+              <span class="detail-value">{{ selectedBeneficiary()?.email }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="details-section" *ngIf="selectedBeneficiary()?.createdAt">
+          <h4>Additional Information</h4>
+          <div class="details-grid">
+            <div class="detail-item" *ngIf="selectedBeneficiary()?.status">
+              <span class="detail-label">Status:</span>
+              <span class="detail-value">{{ selectedBeneficiary()?.status }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Verification:</span>
+              <span class="detail-value">{{ selectedBeneficiary()?.isVerified ? 'Verified' : 'Pending Verification' }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedBeneficiary()?.createdAt">
+              <span class="detail-label">Added:</span>
+              <span class="detail-value">{{ getRelativeTime(selectedBeneficiary()?.createdAt) }}</span>
+            </div>
+            <div class="detail-item" *ngIf="selectedBeneficiary()?.lastUsedAt">
+              <span class="detail-label">Last Used:</span>
+              <span class="detail-value">{{ getRelativeTime(selectedBeneficiary()?.lastUsedAt) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button 
+          *ngIf="selectedBeneficiary()?.status !== 'BLOCKED'"
+          class="btn btn-primary" 
+          (click)="navigateToTransfer(selectedBeneficiary()!)"
+          [disabled]="selectedBeneficiary()?.isVerified !== true">
+          Transfer Now
+        </button>
+        <button class="btn btn-secondary" (click)="closeDetailsModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+

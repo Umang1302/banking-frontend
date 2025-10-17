@@ -1,0 +1,249 @@
+<div class="qr-generate-container">
+  <div class="page-header">
+    <h1>Generate QR Code</h1>
+    <p>Create a QR code to receive payments from anyone</p>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error()" class="alert alert-danger">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="8" x2="12" y2="12"></line>
+      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+    </svg>
+    <span>{{ error() }}</span>
+  </div>
+
+  <!-- QR Generation Form -->
+  <div *ngIf="!showQRCode()" class="form-card">
+    <h2>Payment Details</h2>
+
+    <!-- Account Selection -->
+    <div class="form-group">
+      <label for="account">Select Account *</label>
+      <select 
+        id="account" 
+        [(ngModel)]="selectedAccountNumber" 
+        class="form-control"
+        [disabled]="loading()">
+        <option value="">Select an account</option>
+        <option *ngFor="let account of accounts()" [value]="account.accountNumber">
+          {{ account.accountNumber }} - {{ account.accountType }} 
+          (₹{{ account.balance | number:'1.2-2' }})
+        </option>
+      </select>
+    </div>
+
+    <!-- Amount -->
+    <div class="form-group">
+      <label for="amount">Amount (INR) *</label>
+      <input 
+        type="number" 
+        id="amount" 
+        [(ngModel)]="amount" 
+        (ngModelChange)="validateAmount()"
+        class="form-control"
+        [class.is-invalid]="amountError()"
+        placeholder="Enter amount"
+        min="1"
+        max="100000"
+        step="0.01">
+      
+      <!-- Error Message -->
+      <div *ngIf="amountError()" class="error-message">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>{{ amountError() }}</span>
+      </div>
+      
+      <!-- Quick Amount Buttons -->
+      <div class="quick-amounts">
+        <button 
+          *ngFor="let quickAmount of quickAmounts"
+          type="button"
+          class="quick-amount-btn"
+          (click)="setQuickAmount(quickAmount)">
+          ₹{{ quickAmount }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="form-group">
+      <label for="description">Description (Optional)</label>
+      <textarea 
+        id="description" 
+        [(ngModel)]="description" 
+        class="form-control"
+        placeholder="E.g., Payment for services, Product purchase, etc."
+        rows="3"
+        maxlength="200"></textarea>
+      <small class="form-text">{{ description().length }}/200 characters</small>
+    </div>
+
+    <!-- Expiry Hours -->
+    <div class="form-group">
+      <label for="expiry">QR Code Validity *</label>
+      <select 
+        id="expiry" 
+        [(ngModel)]="expiryHours" 
+        class="form-control">
+        <option *ngFor="let option of expiryOptions" [value]="option.value">
+          {{ option.label }}
+        </option>
+      </select>
+      <small class="form-text">QR code will expire after selected duration</small>
+    </div>
+
+    <!-- Account Info -->
+    <div *ngIf="getSelectedAccount()" class="account-info">
+      <h3>Account Information</h3>
+      <div class="info-row">
+        <span>Account Number:</span>
+        <strong>{{ getSelectedAccount().accountNumber }}</strong>
+      </div>
+      <div class="info-row">
+        <span>Account Type:</span>
+        <strong>{{ getSelectedAccount().accountType }}</strong>
+      </div>
+      <div class="info-row">
+        <span>Available Balance:</span>
+        <strong>{{ formatAmount(getSelectedAccount().balance) }}</strong>
+      </div>
+    </div>
+
+    <!-- Generate Button -->
+    <div class="form-actions">
+      <button 
+        type="button"
+        class="btn btn-primary"
+        (click)="generateQRCode()"
+        [disabled]="generating() || !selectedAccountNumber() || !amount()">
+        <span *ngIf="!generating()">Generate QR Code</span>
+        <span *ngIf="generating()">
+          <span class="spinner"></span>
+          Generating...
+        </span>
+      </button>
+      <button 
+        type="button"
+        class="btn btn-secondary"
+        (click)="viewMyRequests()">
+        View My QR Requests
+      </button>
+    </div>
+  </div>
+
+  <!-- Generated QR Code Display -->
+  <div *ngIf="showQRCode() && generatedQR()" class="qr-display-card">
+    <div class="success-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+    </div>
+
+    <h2>QR Code Generated Successfully!</h2>
+
+    <!-- QR Code Image -->
+    <div class="qr-code-wrapper">
+      <img [src]="qrImageSrc()" alt="QR Code" class="qr-code-image">
+    </div>
+
+    <!-- QR Details -->
+    <div class="qr-details">
+      <div class="detail-row">
+        <span>Request ID:</span>
+        <strong class="request-id">{{ generatedQR()!.requestId }}</strong>
+      </div>
+      <div class="detail-row">
+        <span>Amount:</span>
+        <strong class="amount">{{ formatAmount(generatedQR()!.amount) }}</strong>
+      </div>
+      <div class="detail-row">
+        <span>Account:</span>
+        <strong>{{ generatedQR()!.accountNumber }}</strong>
+      </div>
+      <div class="detail-row">
+        <span>Receiver:</span>
+        <strong>{{ generatedQR()!.receiverName }}</strong>
+      </div>
+      <div class="detail-row" *ngIf="generatedQR()!.description">
+        <span>Description:</span>
+        <strong>{{ generatedQR()!.description }}</strong>
+      </div>
+      <div class="detail-row">
+        <span>Created At:</span>
+        <strong>{{ formatDateTime(generatedQR()!.createdAt) }}</strong>
+      </div>
+      <div class="detail-row">
+        <span>Expires At:</span>
+        <strong class="expires-at">{{ formatDateTime(generatedQR()!.expiresAt) }}</strong>
+      </div>
+      <div class="detail-row">
+        <span>Status:</span>
+        <span class="badge badge-success">{{ generatedQR()!.status }}</span>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="qr-actions">
+      <button 
+        type="button"
+        class="btn btn-primary"
+        (click)="downloadQRCode()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Download QR Code
+      </button>
+
+      <button 
+        type="button"
+        class="btn btn-secondary"
+        (click)="copyRequestId()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        Copy Request ID
+      </button>
+
+      <button 
+        type="button"
+        class="btn btn-secondary"
+        (click)="shareQRCode()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="18" cy="5" r="3"></circle>
+          <circle cx="6" cy="12" r="3"></circle>
+          <circle cx="18" cy="19" r="3"></circle>
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+        </svg>
+        Share
+      </button>
+    </div>
+
+    <!-- Generate Another -->
+    <div class="secondary-actions">
+      <button 
+        type="button"
+        class="btn btn-text"
+        (click)="generateAnother()">
+        Generate Another QR Code
+      </button>
+      <button 
+        type="button"
+        class="btn btn-text"
+        (click)="viewMyRequests()">
+        View All Requests
+      </button>
+    </div>
+  </div>
+</div>
+
