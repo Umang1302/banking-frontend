@@ -111,18 +111,19 @@
           </div>
 
           <!-- IFSC Validation Success -->
-          <div *ngIf="ifscValidation()?.isValid" class="ifsc-validation success">
+          <div *ngIf="ifscValidation()?.isValid || ifscValidation()?.status === 'success'" class="ifsc-validation success">
             <div class="validation-icon">✓</div>
             <div class="validation-details">
-              <strong>Valid IFSC Code</strong>
-              <p *ngIf="ifscValidation()?.bankName"><strong>Bank:</strong> {{ ifscValidation()?.bankName }}</p>
-              <p *ngIf="ifscValidation()?.branchCode"><strong>Branch Code:</strong> {{ ifscValidation()?.branchCode }}</p>
-              <p *ngIf="ifscValidation()?.message" class="text-success">{{ ifscValidation()?.message }}</p>
+              <strong>Valid IFSC Code - Bank Details Verified</strong>
+              <p *ngIf="ifscValidation()?.bank || ifscValidation()?.bankName"><strong>Bank:</strong> {{ ifscValidation()?.bank || ifscValidation()?.bankName }}</p>
+              <p *ngIf="ifscValidation()?.branch"><strong>Branch:</strong> {{ ifscValidation()?.branch }}</p>
+              <p *ngIf="ifscValidation()?.city"><strong>City:</strong> {{ ifscValidation()?.city }}<span *ngIf="ifscValidation()?.state">, {{ ifscValidation()?.state }}</span></p>
+              <p *ngIf="ifscValidation()?.address"><strong>Address:</strong> {{ ifscValidation()?.address }}</p>
             </div>
           </div>
 
           <!-- IFSC Validation Error -->
-          <div *ngIf="ifscValidation() && !ifscValidation()?.isValid" class="ifsc-validation error">
+          <div *ngIf="ifscValidation() && !ifscValidation()?.isValid && ifscValidation()?.status !== 'success'" class="ifsc-validation error">
             <div class="validation-icon">✗</div>
             <span>{{ ifscValidation()?.message || 'Invalid IFSC code. Please check and try again.' }}</span>
           </div>
@@ -264,7 +265,11 @@
           <h4>Bank Details</h4>
           <div class="review-item">
             <span class="review-label">Bank Name:</span>
-            <span class="review-value">{{ ifscValidation()?.bankName }}</span>
+            <span class="review-value">{{ ifscValidation()?.bank || ifscValidation()?.bankName }}</span>
+          </div>
+          <div class="review-item" *ngIf="ifscValidation()?.branch">
+            <span class="review-label">Branch:</span>
+            <span class="review-value">{{ ifscValidation()?.branch }}</span>
           </div>
           <div class="review-item">
             <span class="review-label">Account Number:</span>
@@ -273,6 +278,10 @@
           <div class="review-item">
             <span class="review-label">IFSC Code:</span>
             <span class="review-value">{{ beneficiaryForm.get('ifscCode')?.value }}</span>
+          </div>
+          <div class="review-item" *ngIf="ifscValidation()?.city || ifscValidation()?.state">
+            <span class="review-label">Location:</span>
+            <span class="review-value">{{ ifscValidation()?.city }}<span *ngIf="ifscValidation()?.state">, {{ ifscValidation()?.state }}</span></span>
           </div>
         </div>
 
@@ -322,7 +331,8 @@
         <h2>Beneficiary {{ isEditMode() ? 'Updated' : 'Added' }} Successfully!</h2>
         <p class="beneficiary-name">{{ beneficiaryForm.get('beneficiaryName')?.value }}</p>
         <div class="beneficiary-summary">
-          <p>{{ ifscValidation()?.bankName }}</p>
+          <p>{{ ifscValidation()?.bank || ifscValidation()?.bankName }}</p>
+          <p *ngIf="ifscValidation()?.branch">Branch: {{ ifscValidation()?.branch }}</p>
           <p>Account: {{ beneficiaryForm.get('accountNumber')?.value }}</p>
           <span class="status-badge badge-warning">Pending Verification</span>
         </div>

@@ -111,9 +111,26 @@ export class BeneficiaryFormComponent implements OnInit {
           this.ifscValidation.set({
             status: 'success',
             message: 'IFSC code is valid',
-            ifscCode: beneficiary.ifscCode,
+            ifsc: beneficiary.ifscCode,
+            bank: beneficiary.bankName,
             bankCode: beneficiary.ifscCode.substring(0, 4),
+            branch: beneficiary.branchName || '',
             branchCode: beneficiary.ifscCode.substring(5),
+            address: '',
+            contact: '',
+            city: '',
+            district: '',
+            state: '',
+            centre: '',
+            micr: '',
+            imps: false,
+            rtgs: false,
+            neft: true,
+            upi: false,
+            swift: null,
+            iso3166: '',
+            // Legacy fields
+            ifscCode: beneficiary.ifscCode,
             bankName: beneficiary.bankName,
             isValid: true
           });
@@ -138,13 +155,30 @@ export class BeneficiaryFormComponent implements OnInit {
       },
       error: (err) => {
         console.error('IFSC validation error:', err);
-        // API 7 error response structure
+        // API 7 error response structure - updated for new API
         this.ifscValidation.set({
           status: 'error',
           message: err.error?.message || 'Invalid IFSC code',
-          ifscCode: ifscCode,
+          ifsc: ifscCode,
+          bank: '',
           bankCode: '',
+          branch: '',
           branchCode: '',
+          address: '',
+          contact: '',
+          city: '',
+          district: '',
+          state: '',
+          centre: '',
+          micr: '',
+          imps: false,
+          rtgs: false,
+          neft: false,
+          upi: false,
+          swift: null,
+          iso3166: '',
+          // Legacy fields
+          ifscCode: ifscCode,
           bankName: '',
           isValid: false
         });
@@ -163,7 +197,8 @@ export class BeneficiaryFormComponent implements OnInit {
     const nameValid = this.beneficiaryForm.get('beneficiaryName')?.valid || false;
     const accountValid = this.beneficiaryForm.get('accountNumber')?.valid || false;
     const accountMatch = this.checkAccountNumberMatch();
-    const ifscValid = this.ifscValidation()?.isValid || false;
+    // Check both new and legacy field for validation status
+    const ifscValid = this.ifscValidation()?.isValid || (this.ifscValidation()?.status === 'success');
     
     // Mobile and email are optional but must be valid if filled
     const mobileControl = this.beneficiaryForm.get('mobileNumber');
@@ -223,8 +258,9 @@ export class BeneficiaryFormComponent implements OnInit {
       beneficiaryName: formValue.beneficiaryName,
       accountNumber: formValue.accountNumber,
       ifscCode: formValue.ifscCode.toUpperCase(),
-      bankName: this.ifscValidation()?.bankName || '',
-      branchName: '', // Not captured in form
+      // Use new field names with fallback to legacy
+      bankName: this.ifscValidation()?.bank || this.ifscValidation()?.bankName || '',
+      branchName: this.ifscValidation()?.branch || '', // Now from API response
       accountType: 'SAVINGS', // Default value
       nickname: formValue.nickname || undefined,
       email: formValue.email || undefined, // Optional email field

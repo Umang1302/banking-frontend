@@ -41,14 +41,32 @@ export interface BeneficiaryDeleteResponse {
 }
 
 // API 7: GET /api/eft/validate-ifsc/{ifscCode} - Response
+// Updated to use Razorpay IFSC API for comprehensive bank details
 export interface IFSCValidationResponse {
   status: string;
   message: string;
-  ifscCode: string;
+  ifsc: string;
+  bank: string;
   bankCode: string;
+  branch: string;
   branchCode: string;
-  bankName: string;
-  isValid: boolean;
+  address: string;
+  contact: string;
+  city: string;
+  district: string;
+  state: string;
+  centre: string;
+  micr: string;
+  imps: boolean;
+  rtgs: boolean;
+  neft: boolean;
+  upi: boolean;
+  swift: string | null;
+  iso3166: string;
+  // Legacy fields for backward compatibility
+  ifscCode?: string; // Maps to 'ifsc'
+  bankName?: string; // Maps to 'bank'
+  isValid?: boolean; // Derived from status
 }
 
 // Customer API NEFT Transfer Models (APIs 8-10)
